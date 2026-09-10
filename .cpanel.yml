@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export PUBLICPATH=/home1/jimmymo2/f.pfau.cl
+    - /bin/mkdir -p $PUBLICPATH
+    - /bin/cp -R public/* $PUBLICPATH/
