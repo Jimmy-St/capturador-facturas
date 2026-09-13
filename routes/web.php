@@ -1,11 +1,26 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvoiceController;
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+// Rutas de Autenticación
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/', function () {
-    return '¡Hola! La aplicación de facturas está funcionando correctamente en f.pfau.cl';
+// Panel Web principal y Operaciones de Facturas (Protegidos por autenticación)
+Route::middleware('auth')->group(function () {
+    Route::get('/', [DashboardController::class, 'index']);
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Detalle de la factura (usando InvoiceController en lugar de DashboardController)
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+    
+    // Cambiar estado a revisada
+    Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.update-status');
 });
+
+// Ruta de prueba sin autenticación
+Route::get('/probar-factura', [InvoiceController::class, 'processInvoice']);
