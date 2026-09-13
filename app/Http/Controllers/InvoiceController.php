@@ -42,7 +42,7 @@ class InvoiceController extends Controller
         //$path = 'invoices/invoice1.jpg'; 
         $path = 'invoices/invoice2.jpg'; 
         
-        $prompt = 'Analiza la imagen adjunta. Verifica que corresponda a un documento tributario (factura, guía, boleta, etc.) Si la imagen muestra otra cosa, devuelve "error": "imagen incorrecta". Si la imagen está ilegible, borrosa o muy oscura, devuelve: "error":  "imagen borrosa" o "error": "imagen oscura". Si el documento es válido y legible, extrae estrictamente los campos requeridos, la fecha como año-mes-dia y deja el campo error vacío.';
+        $prompt = config('services.gemini.prompt', env('GEMINI_PROMPT'));
 
         try {
             $resultadoJson = $geminiService->analizarFactura($path, $prompt);

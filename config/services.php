@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'prompt' => env('GEMINI_PROMPT'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
