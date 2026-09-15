@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Consola de Facturas - Sistema Pfau')
+@section('title', config('app.name') . ' - ' . config('app.tagline'))
 
 @section('content')
 

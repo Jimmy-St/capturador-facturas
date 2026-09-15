@@ -14,13 +14,13 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key', env('GEMINI_API_KEY'));
-        $this->model = 'gemini-3.5-flash-lite'; 
+        $this->model = 'gemini-3.5-flash-lite';
     }
 
     /**
      * Image from Laravel storage to structured JSON.
      * 
-     * @param string $path 
+     * @param string $path
      * @param string $prompt
      * @return array
      */

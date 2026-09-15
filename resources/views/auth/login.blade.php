@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ingreso - Sistema de Facturas</title>
+    <title>{{config('app.name')}} - {{config('app.tagline')}}</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -18,10 +18,8 @@
             <i data-lucide="shield-check" class="w-24 h-24 text-orange-500 stroke-1"></i>
         </div>
 
-        <h2 class="text-center text-xl font-extrabold text-gray-800 tracking-wide uppercase mb-1">
-            Talos
-        </h2>
-        <h3 class="text-center text-sm font-bold text-gray-800 mb-1">Observador de Facturas</h3>
+        <h2 class="text-center text-xl font-extrabold text-gray-800 tracking-wide uppercase mb-1">{{config('app.name')}}</h2>
+        <h3 class="text-center text-sm font-bold text-gray-800 mb-1">{{config('app.tagline')}}</h3>
 
         <!-- Errores de validación -->
         @if($errors->any())
@@ -64,7 +62,7 @@
         </form>
     </div>
     <div class="font-semibold text-center mt-4 text-xs text-gray-400">
-        © Gestión de Facturas Pfau {{ date('Y') }}
+        {{config('app.tagline')}} {{config('app.client')}} {{ date('Y') }} ©
     </div>
 
     <!-- Inicializar Lucide Icons -->

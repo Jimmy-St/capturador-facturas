@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Factura #' . $invoice->folio . ' - Talos')
+@section('title', 'Factura #' . $invoice->folio . ' - ' . config('app.name'))
 
 @section('content')
 <div x-data="{ showModal: false }" class="space-y-6">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Consola de Facturas - Sistema Pfau')</title>
+    <title>@yield('title', config('app.name') . ' - ' . config('app.tagline'))</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -21,8 +21,8 @@
                 <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
                     <i data-lucide="shield-check" class="w-10 h-10 text-orange-500"></i>
                     <div class="flex flex-col">
-                        <h1 class="font-extrabold text-xl tracking-wider text-gray-800 group-hover:text-orange-600 transition-colors leading-tight">AERO</h1>
-                        <span class="text-xs font-bold text-gray-600">Observador de Facturas</span>
+                        <h1 class="font-extrabold text-xl tracking-wider text-gray-800 group-hover:text-orange-600 transition-colors leading-tight">{{config('app.name')}}</h1>
+                        <span class="text-xs font-bold text-gray-600">{{config('app.tagline')}}</span>
                     </div>
                 </a>
             </div>

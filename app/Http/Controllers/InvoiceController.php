@@ -43,7 +43,7 @@ class InvoiceController extends Controller
         $path = 'invoices/invoice2.jpg'; 
         
         $prompt = config('services.gemini.prompt', env('GEMINI_PROMPT'));
-
+        
         try {
             $resultadoJson = $geminiService->analizarFactura($path, $prompt);
             return response()->json(['success' => true,'data' => $resultadoJson]);

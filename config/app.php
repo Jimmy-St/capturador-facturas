@@ -13,7 +13,13 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'TALOS'),
+
+    'tagline' => env('APP_TAGLINE', 'Observador de Facturas'),
+
+    'client' => env('APP_CLIENT', 'Pfau'),
+
+    'description' => env('APP_DESCRIPTION', 'Sistema de Captura y Análisis de Documentos Tributarios'),
 
     /*
     |--------------------------------------------------------------------------
@@ -78,11 +84,11 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'es'),
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'es'),
 
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+    'faker_locale' => env('APP_FAKER_LOCALE', 'es_ES'),
 
     /*
     |--------------------------------------------------------------------------
