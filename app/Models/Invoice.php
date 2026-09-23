@@ -11,21 +11,29 @@ class Invoice extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'document_type',
         'folio',
-        'rut_emisor',
-        'rut_receptor',
-        'invoice_date',
+        'rut',
+        'supplier',
+        'document_date',
         'reception_date',
         'amount',
-        'status',
+        'fidelity',
+        'tokens_cost',
+        'is_reviewed',
         'image_path',
-        'aws_response_json',
+        'raw_response_json',
         'user_id',
     ];
 
-    /**
-     * Relación: Una factura fue registrada por un usuario.
-     */
+    protected $casts = [
+        'document_date' => 'date',
+        'reception_date' => 'datetime',
+        'amount' => 'decimal:2',
+        'is_reviewed' => 'boolean',
+        'tokens_cost' => 'integer',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

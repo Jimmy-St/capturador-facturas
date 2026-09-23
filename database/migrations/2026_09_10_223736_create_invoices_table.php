@@ -10,21 +10,26 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
+            $table->string('document_type')->default('FACTURA');
             $table->string('folio');
-            $table->string('rut_emisor');
-            $table->string('rut_receptor');
-            $table->date('invoice_date');
+            $table->string('rut'); 
+            $table->string('supplier'); 
+            $table->date('document_date');
             $table->dateTime('reception_date')->nullable();
             $table->decimal('amount', 12, 2);
-            $table->string('status')->default('pendiente');
-            
-            // Nuevos campos operativos y de auditoría
-            $table->string('image_path')->nullable();
-            $table->longText('aws_response_json')->nullable();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
 
+            $table->string('fidelity')->default('media'); 
+
+            $table->unsignedInteger('tokens_cost')->default(0); 
+
+            $table->boolean('is_reviewed')->default(false); 
+            
+            $table->string('image_path')->nullable();
+            $table->longText('raw_response_json')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            
             $table->timestamps();
-            $table->softDeletes(); // Para soft delete
+            $table->softDeletes();
         });
     }
 

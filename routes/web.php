@@ -18,6 +18,9 @@ Route::middleware('auth')->group(function () {
     
     // Detalle de la factura (usando InvoiceController en lugar de DashboardController)
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
+    Route::patch('/invoices/{invoice}/review', [InvoiceController::class, 'markAsReviewed'])->name('invoices.review');
+
     
 
     // Cambiar estado a revisada
