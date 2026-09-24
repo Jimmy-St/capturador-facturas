@@ -21,7 +21,12 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/');
+
+            if (Auth::user()->isOperator()) {
+                return redirect()->route('capture.index');
+            }
+
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([

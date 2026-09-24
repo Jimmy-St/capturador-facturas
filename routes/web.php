@@ -1,34 +1,37 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CaptureController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
-use App\Http\Controllers\CaptureController;
+use Illuminate\Support\Facades\Route;
 
 // Rutas de Autenticación
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Panel Web principal y Operaciones de Facturas (Protegidos por autenticación)
+// Rutas Protegidas por Autenticación
 Route::middleware('auth')->group(function () {
-    Route::get('/', [DashboardController::class, 'index']);
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Detalle de la factura (usando InvoiceController en lugar de DashboardController)
-    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
-    Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
-    Route::patch('/invoices/{invoice}/review', [InvoiceController::class, 'markAsReviewed'])->name('invoices.review');
+    // Redirección inteligente de raíz según el rol
+    Route::get('/', function () {
+        return auth()->user()->isOperator()
+            ? redirect()->route('capture.index')
+            : redirect()->route('dashboard');
+    });
 
-    
+    // Módulo de Captura en Terreno y Procesamiento (Accesible por operator, supervisor y admin)
+    Route::get('/scan', [CaptureController::class, 'index'])->name('capture.index');
+    Route::post('/invoices/process', [InvoiceController::class, 'processInvoice'])->name('invoices.process');
 
-    // Cambiar estado a revisada
-    Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.update-status');
+    // Panel de Auditoría y Dashboard (Solo supervisor y admin)
+    Route::middleware('role:supervisor,admin')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Detalle, edición y revisión de facturas
+        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+        Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
+        Route::patch('/invoices/{invoice}/review', [InvoiceController::class, 'markAsReviewed'])->name('invoices.review');
+        Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.update-status');
+    });
 });
-
-// Ruta de prueba sin autenticación
-Route::get('/probar-factura', [InvoiceController::class, 'processInvoice']);
-
-// Ruta de capturador
-Route::get('/scan', [CaptureController::class, 'index'])->name('capture.index');

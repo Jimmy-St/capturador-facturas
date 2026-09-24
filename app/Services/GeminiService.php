@@ -2,117 +2,118 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Exception;
+use Illuminate\Support\Facades\Http;
 
 class GeminiService
 {
     protected string $apiKey;
+
     protected string $model;
 
     public function __construct()
     {
-        $this->apiKey = config('services.gemini.key', env('GEMINI_API_KEY'));
-        $this->model = 'gemini-3.5-flash-lite';
+        $this->apiKey = config('services.gemini.key', env('GEMINI_API_KEY', ''));
+        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.5-flash-lite'));
     }
 
     /**
-     * Image from Laravel storage to structured JSON.
-     * 
-     * @param string $path
-     * @param string $prompt
-     * @return array
+     * Analyze invoice image content using Gemini API and return structured data including token usage.
+     *
+     * @param  string  $imageContent  Raw binary content of the image
+     * @param  string  $mimeType  Mime type of the image (e.g. image/jpeg)
+     * @param  string  $prompt  Prompt instructions for extraction
+     *
+     * @throws Exception
      */
-    public function analizarFactura(string $path, string $prompt): array
-    {        
-        if (!Storage::disk('public')->exists($path)) {
-            throw new Exception("La imagen no existe en la ruta especificada: {$path}");
-        }
-
-        // Image in Base64
-        //$imageContent = Storage::get($path);
-        //$mimeType = Storage::mimeType($path);
-        $imageContent = Storage::disk('public')->get($path);
-        $mimeType = Storage::disk('public')->mimeType($path);
+    public function analyzeInvoiceFromContent(string $imageContent, string $mimeType, string $prompt = ''): array
+    {
         $base64Image = base64_encode($imageContent);
-
-        // URL endpoint Gemini
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}";
 
-        // JSON scheme
+        $effectivePrompt = ! empty(trim($prompt))
+            ? $prompt
+            : 'Analiza detalladamente esta imagen de documento tributario y extrae con máxima precisión todos los campos requeridos en el esquema JSON.';
+
         $jsonSchema = [
-            "type" => "OBJECT",
-            "properties" => [
-                "tipo_documento" => ["type" => "STRING"],
-                "numero_documento" => ["type" => "STRING"],
-                "rut_proveedor" => ["type" => "STRING"],
-                "nombre_proveedor" => ["type" => "STRING"],
-                "fecha_emision" => ["type" => "STRING"],
-                "total" => ["type" => "STRING"],
-                "articulos" => [
-                    "type" => "ARRAY",
-                    "items" => [
-                        "type" => "OBJECT",
-                        "properties" => [
-                            "codigo" => ["type" => "STRING"],
-                            "descripcion" => ["type" => "STRING"]
+            'type' => 'OBJECT',
+            'properties' => [
+                'tipo_documento' => ['type' => 'STRING'],
+                'numero_documento' => ['type' => 'STRING'],
+                'rut_proveedor' => ['type' => 'STRING'],
+                'nombre_proveedor' => ['type' => 'STRING'],
+                'fecha_emision' => ['type' => 'STRING'],
+                'total' => ['type' => 'STRING'],
+                'articulos' => [
+                    'type' => 'ARRAY',
+                    'items' => [
+                        'type' => 'OBJECT',
+                        'properties' => [
+                            'codigo' => ['type' => 'STRING'],
+                            'descripcion' => ['type' => 'STRING'],
                         ],
-                        "required" => ["codigo", "descripcion"]
-                    ]
+                        'required' => ['codigo', 'descripcion'],
+                    ],
                 ],
-                "fidelidad_estimada" => ["type" => "INTEGER"],
-                "error" => ["type" => "STRING"]
+                'fidelidad_estimada' => ['type' => 'INTEGER'],
+                'error' => ['type' => 'STRING'],
             ],
-            "required" => [
-                "tipo_documento", "numero_documento", "rut_proveedor", 
-                "nombre_proveedor", "fecha_emision", "total", 
-                "articulos", "fidelidad_estimada", "error"
-            ]
+            'required' => [
+                'tipo_documento', 'numero_documento', 'rut_proveedor',
+                'nombre_proveedor', 'fecha_emision', 'total',
+                'articulos', 'fidelidad_estimada', 'error',
+            ],
         ];
 
-        // Payload HTTP
         $payload = [
-            "contents" => [
+            'contents' => [
                 [
-                    "parts" => [
-                        ["text" => $prompt],
+                    'parts' => [
+                        ['text' => $effectivePrompt],
                         [
-                            "inline_data" => [
-                                "mime_type" => $mimeType,
-                                "data" => $base64Image
-                            ]
-                        ]
-                    ]
-                ]
+                            'inline_data' => [
+                                'mime_type' => $mimeType,
+                                'data' => $base64Image,
+                            ],
+                        ],
+                    ],
+                ],
             ],
-            "generationConfig" => [
-                "responseMimeType" => "application/json",
-                "responseSchema" => $jsonSchema,
-                "temperature" => 0.1 // Response temperature
-            ]
+            'generationConfig' => [
+                'responseMimeType' => 'application/json',
+                'responseSchema' => $jsonSchema,
+                'temperature' => 0.1,
+            ],
         ];
 
-        // HTTP get
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-        ])->post($url, $payload);
+        $response = Http::timeout(60)
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post($url, $payload);
 
-        // Errors control
         if ($response->failed()) {
-            throw new Exception("Error al conectar con la API de Gemini: " . $response->body());
+            throw new Exception('Gemini API connection error: '.$response->body());
         }
 
         $responseData = $response->json();
-
-        // Extract Gemini JSON response
         $jsonStringResponse = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
-        if (!$jsonStringResponse) {
-            throw new Exception("La respuesta de Gemini no contiene el formato esperado.");
+        if (! $jsonStringResponse) {
+            throw new Exception('Gemini response does not contain the expected format.');
         }
 
-        // JSON to Array
-        return json_decode($jsonStringResponse, true);
+        $parsed = json_decode($jsonStringResponse, true);
+
+        if (! is_array($parsed)) {
+            throw new Exception('Gemini response is not valid JSON.');
+        }
+
+        // Extraer consumo real de tokens desde usageMetadata en la respuesta raíz de Google
+        $tokensCost = $responseData['usageMetadata']['totalTokenCount']
+            ?? (($responseData['usageMetadata']['promptTokenCount'] ?? 0) + ($responseData['usageMetadata']['candidatesTokenCount'] ?? 0));
+
+        $parsed['tokens_cost'] = (int) $tokensCost;
+
+        return $parsed;
     }
 }
