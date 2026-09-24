@@ -130,7 +130,7 @@
             
             <div class="space-y-2 max-w-xs">
                 <h3 class="text-white font-bold text-lg" x-text="loadingText">Procesando documento...</h3>
-                <p class="text-xs text-gray-400">Gemini IA está extrayendo los datos tributarios con alta precisión</p>
+                <p class="text-xs text-gray-400">OCR está extrayendo los datos tributarios con alta precisión</p>
             </div>
         </div>
     </main>
@@ -331,7 +331,7 @@
                         0, 0, croppedCanvas.width, croppedCanvas.height
                     );
 
-                    this.loadingText = 'Enviando a Gemini IA...';
+                    this.loadingText = 'Enviando a Lector OCR...';
 
                     croppedCanvas.toBlob(async (blob) => {
                         if (!blob) {
@@ -352,7 +352,7 @@
                     if (!file) return;
 
                     this.isProcessing = true;
-                    this.loadingText = 'Enviando imagen a Gemini IA...';
+                    this.loadingText = 'Enviando imagen a Lector OCR...';
                     this.errorMessage = '';
                     this.successMessage = '';
 
@@ -397,7 +397,7 @@
                             }
                         } else {
                             this.isProcessing = false;
-                            this.errorMessage = result.error || 'Ocurrió un error al procesar el documento con Gemini.';
+                            this.errorMessage = result.error || 'Ocurrió un error al procesar el documento con OCR.';
                             this.refreshIcons();
                         }
 
