@@ -242,8 +242,8 @@ class InvoicePaymentTest extends TestCase
             ->assertSee('TRF-222222')
             ->assertSee('Primer abono en cheque')
             ->assertSee('Pago final por transferencia')
-            ->assertSee('Registrar Instancia de Pago')
-            ->assertSee('Historial de Comprobantes');
+            ->assertSee('Registrar Pago')
+            ->assertSee('Historial de Pagos');
     }
 
     public function test_dashboard_filters_invoices_by_payment_status(): void

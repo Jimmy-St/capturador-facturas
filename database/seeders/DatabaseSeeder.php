@@ -17,23 +17,29 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $admin = User::create([
-            'username' => 'admin',
-            'password' => Hash::make('12345678'),
-            'role' => 'admin',
-        ]);
+        $admin = User::firstOrCreate(
+            ['username' => 'admin'],
+            [
+                'password' => Hash::make('12345678'),
+                'role' => 'admin',
+            ]
+        );
 
-        $supervisor = User::create([
-            'username' => 'supervisor',
-            'password' => Hash::make('12345678'),
-            'role' => 'supervisor',
-        ]);
+        $supervisor = User::firstOrCreate(
+            ['username' => 'supervisor'],
+            [
+                'password' => Hash::make('12345678'),
+                'role' => 'supervisor',
+            ]
+        );
 
-        User::create([
-            'username' => 'operador',
-            'password' => Hash::make('12345678'),
-            'role' => 'operator',
-        ]);
+        User::firstOrCreate(
+            ['username' => 'operador'],
+            [
+                'password' => Hash::make('12345678'),
+                'role' => 'operator',
+            ]
+        );
 
         $faker = Faker::create('es_CL');
 

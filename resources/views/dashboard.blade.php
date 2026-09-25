@@ -11,53 +11,41 @@
         
         <!-- Total Documentos -->
         <a href="{{ route('dashboard') }}" 
-           class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all group flex items-center justify-between">
-            <div>
-                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Recepcionados</span>
-                <span class="text-2xl font-black text-gray-900 mt-1 block">{{ number_format($stats['total_count'] ?? 0, 0, ',', '.') }}</span>
+           class="relative overflow-hidden bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all group {{ !request('payment_status') ? 'ring-1 ring-slate-400 bg-slate-50/30' : '' }}">
+            <div class="relative z-10 space-y-1">
+                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Total Recepcionados</span>
+                <span class="text-3xl font-black text-gray-900 tracking-tight mx-8">{{ number_format($stats['total_count'] ?? 0, 0, ',', '.') }}</span>
                 <span class="text-xs text-gray-500 font-medium">Documentos en sistema</span>
             </div>
-            <div class="p-3 bg-gray-100 group-hover:bg-orange-50 text-gray-600 group-hover:text-orange-600 rounded-xl transition-colors">
-                <i data-lucide="files" class="w-6 h-6"></i>
-            </div>
+            <i data-lucide="files" class="w-28 h-28 absolute -right-4 -bottom-4 text-slate-100 pointer-events-none -rotate-12"></i>
         </a>
 
         <!-- Total Adeudados -->
         <a href="{{ route('dashboard', array_merge(request()->query(), ['payment_status' => 'adeudado'])) }}" 
-           class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all group flex items-center justify-between {{ request('payment_status') === 'adeudado' ? 'ring-2 ring-amber-400 bg-amber-50/20' : '' }}">
-            <div>
-                <span class="text-xs font-bold text-amber-700 uppercase tracking-wider block flex items-center space-x-1">
-                    <i data-lucide="clock-alert" class="w-3.5 h-3.5 text-amber-600"></i>
-                    <span>Documentos Adeudados</span>
-                </span>
-                <span class="text-2xl font-black text-amber-700 mt-1 block">{{ number_format($stats['adeudado_count'] ?? 0, 0, ',', '.') }}</span>
-                <span class="text-xs font-semibold text-rose-600">$ {{ number_format($stats['total_amount_adeudado'] ?? 0, 0, ',', '.') }} CLP adeudado</span>
+           class="relative overflow-hidden bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all group {{ request('payment_status') === 'adeudado' ? 'ring-1 ring-amber-400 bg-amber-50/30' : '' }}">
+            <div class="relative z-10 space-y-1">
+                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Documentos Adeudados</span>
+                <span class="text-3xl font-black text-amber-700 tracking-tight mx-8">{{ number_format($stats['adeudado_count'] ?? 0, 0, ',', '.') }}</span>
+                <span class="text-xs text-gray-500 font-medium">$ {{ number_format($stats['total_amount_adeudado'] ?? 0, 0, ',', '.') }} adeudado</span>
             </div>
-            <div class="p-3 bg-amber-100 text-amber-700 rounded-xl">
-                <i data-lucide="receipt text-amber-600" class="w-6 h-6"></i>
-            </div>
+            <i data-lucide="clock" class="w-28 h-28 absolute -right-4 -bottom-4 text-amber-50 pointer-events-none -rotate-12"></i>
         </a>
 
         <!-- Total Pagados -->
         <a href="{{ route('dashboard', array_merge(request()->query(), ['payment_status' => 'pagado'])) }}" 
-           class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all group flex items-center justify-between {{ request('payment_status') === 'pagado' ? 'ring-2 ring-emerald-400 bg-emerald-50/20' : '' }}">
-            <div>
-                <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider block flex items-center space-x-1">
-                    <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                    <span>Documentos Pagados</span>
-                </span>
-                <span class="text-2xl font-black text-emerald-700 mt-1 block">{{ number_format($stats['pagado_count'] ?? 0, 0, ',', '.') }}</span>
-                <span class="text-xs font-semibold text-emerald-600">$ {{ number_format($stats['total_amount_pagado'] ?? 0, 0, ',', '.') }} CLP pagado</span>
+           class="relative overflow-hidden bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all group {{ request('payment_status') === 'pagado' ? 'ring-1 ring-emerald-400 bg-emerald-50/30' : '' }}">
+            <div class="relative z-10 space-y-1">
+                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Documentos Pagados</span>
+                <span class="text-3xl font-black text-emerald-700 mx-8 tracking-tight">{{ number_format($stats['pagado_count'] ?? 0, 0, ',', '.') }}</span>
+                <span class="text-xs text-gray-500 font-medium">$ {{ number_format($stats['total_amount_pagado'] ?? 0, 0, ',', '.') }} pagado</span>
             </div>
-            <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl">
-                <i data-lucide="badge-dollar-sign" class="w-6 h-6"></i>
-            </div>
+            <i data-lucide="check-circle-2" class="w-28 h-28 absolute -right-4 -bottom-4 text-emerald-50 pointer-events-none -rotate-12"></i>
         </a>
 
     </div>
 
     <!-- Invoices Table Section -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         
         <!-- Cabecera con Filtros de Estado y Fidelidad -->
         <div class="p-5 border-b border-gray-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -68,7 +56,7 @@
             
             <!-- Botones / Badges de Filtro por Fidelidad -->
             <div class="flex flex-wrap items-center gap-1.5">
-                <span class="text-xs text-gray-400 font-medium mr-1">Fidelidad IA:</span>
+                <span class="text-xs text-gray-400 font-medium mr-1">Fidelidad OCR:</span>
                 
                 <a href="{{ route('dashboard', request()->except('fidelity')) }}" 
                    class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all {{ request('fidelity') == '' ? 'bg-slate-900 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
@@ -107,7 +95,7 @@
                         <th class="py-3.5 px-4 font-bold">Estado Pago</th>
                         <th class="py-3.5 px-4 font-bold">Recepción</th>
                         <th class="py-3.5 px-4 font-bold">Monto Total</th>
-                        <th class="py-3.5 px-4 font-bold text-right pr-6">Fidelidad IA</th>
+                        <th class="py-3.5 px-4 font-bold text-right pr-6">Fidelidad OCR</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-sm">
@@ -150,7 +138,7 @@
 
                             <!-- Monto Facturado y Abonos Parciales -->
                             <td class="py-3.5 px-4 font-semibold text-gray-900">
-                                <div class="text-sm font-black text-gray-900">${{ number_format($invoice->amount, 0, ',', '.') }}</div>
+                                <div class="text-sm font-bold text-gray-900">${{ number_format($invoice->amount, 0, ',', '.') }}</div>
                                 @if($invoice->payment_status === 'adeudado' && $invoice->totalPaid() > 0)
                                     <div class="text-[11px] text-emerald-600 font-bold">
                                         Abonado: ${{ number_format($invoice->totalPaid(), 0, ',', '.') }}
