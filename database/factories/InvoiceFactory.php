@@ -28,6 +28,7 @@ class InvoiceFactory extends Factory
             'fidelity' => 'alta',
             'tokens_cost' => 500,
             'is_reviewed' => false,
+            'payment_status' => 'adeudado',
             'image_path' => 'invoices/sample.jpg',
             'raw_response_json' => json_encode(['status' => 'OK']),
         ];

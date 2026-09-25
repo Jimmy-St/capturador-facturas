@@ -7,6 +7,7 @@ use App\Services\GeminiService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
@@ -39,7 +40,7 @@ class InvoiceController extends Controller
 
     public function show($id)
     {
-        $invoice = Invoice::with('user')->find($id);
+        $invoice = Invoice::with(['user', 'payments.user'])->findOrFail($id);
 
         return view('invoices.show', compact('invoice'));
     }
@@ -94,13 +95,16 @@ class InvoiceController extends Controller
         ]);
 
         $file = $request->file('image');
-        $imageContent = $file->get();
+        $rawContent = $file->get();
         $prompt = config('services.gemini.prompt', env('GEMINI_PROMPT')) ?? '';
+
+        // Pre-optimización del documento con GD para garantizar ultra-baja latencia y bajo consumo de tokens
+        $optimizedImageContent = $this->optimizeInvoiceImage($rawContent);
 
         try {
             $response = $this->geminiService->analyzeInvoiceFromContent(
-                $imageContent,
-                $file->getMimeType(),
+                $optimizedImageContent,
+                'image/jpeg',
                 $prompt
             );
 
@@ -115,21 +119,8 @@ class InvoiceController extends Controller
             }
 
             $uuidName = (string) Str::uuid().'.jpg';
-            $destinationPath = storage_path('app/public/invoices/'.$uuidName);
-
-            if (! file_exists(dirname($destinationPath))) {
-                mkdir(dirname($destinationPath), 0755, true);
-            }
-
-            $srcImage = @imagecreatefromstring($imageContent);
-
-            if ($srcImage !== false) {
-                imagejpeg($srcImage, $destinationPath, 70);
-                imagedestroy($srcImage);
-                $imagePath = 'invoices/'.$uuidName;
-            } else {
-                $imagePath = $file->storeAs('invoices', $uuidName, 'public');
-            }
+            $imagePath = 'invoices/'.$uuidName;
+            Storage::disk('public')->put($imagePath, $optimizedImageContent);
 
             $invoice = Invoice::create([
                 'document_type' => ! empty($response['tipo_documento']) ? (string) $response['tipo_documento'] : 'FACTURA ELECTRÓNICA',
@@ -150,8 +141,6 @@ class InvoiceController extends Controller
                 'success' => true,
                 'invoice_id' => $invoice->id,
                 'is_operator' => auth()->user()?->isOperator() ?? false,
-                'folio' => $invoice->folio,
-                'supplier' => $invoice->supplier,
                 'message' => 'Documento procesado exitosamente.',
             ]);
 
@@ -161,6 +150,45 @@ class InvoiceController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Resize and compress invoice image for optimal OCR latency and storage efficiency.
+     */
+    private function optimizeInvoiceImage(string $rawContent): string
+    {
+        $maxDimension = (int) config('invoices.max_dimension', 1800);
+        $quality = (int) config('invoices.quality', 75);
+
+        $srcImage = @imagecreatefromstring($rawContent);
+        if ($srcImage === false) {
+            return $rawContent;
+        }
+
+        $width = imagesx($srcImage);
+        $height = imagesy($srcImage);
+
+        if ($width > $maxDimension || $height > $maxDimension) {
+            if ($width >= $height) {
+                $newWidth = $maxDimension;
+                $newHeight = (int) round(($height * $maxDimension) / $width);
+            } else {
+                $newHeight = $maxDimension;
+                $newWidth = (int) round(($width * $maxDimension) / $height);
+            }
+
+            $dstImage = imagecreatetruecolor($newWidth, $newHeight);
+            imagecopyresampled($dstImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            imagedestroy($srcImage);
+            $srcImage = $dstImage;
+        }
+
+        ob_start();
+        imagejpeg($srcImage, null, $quality);
+        $optimized = ob_get_clean();
+        imagedestroy($srcImage);
+
+        return $optimized ?: $rawContent;
     }
 
     /**
@@ -237,7 +265,9 @@ class InvoiceController extends Controller
         }
 
         try {
-            return Carbon::parse($date)->format('Y-m-d');
+            $normalizedDate = str_replace('/', '-', trim((string) $date));
+
+            return Carbon::parse($normalizedDate)->format('Y-m-d');
         } catch (\Throwable) {
             return now()->format('Y-m-d');
         }

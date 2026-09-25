@@ -48,8 +48,12 @@
         <!-- Fila Inferior del Header: Barra de Filtros Global y Fija -->
         <div class="bg-white py-3 shadow-inner">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <form method="GET" action="{{ route('dashboard') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <form method="GET" action="{{ route('dashboard') }}" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 items-end">
                     
+                    @if(request('fidelity'))
+                        <input type="hidden" name="fidelity" value="{{ request('fidelity') }}">
+                    @endif
+
                     <!-- Buscador por texto / RUT -->
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Buscar (RUT / Folio)</label>
@@ -60,6 +64,17 @@
                             <input type="text" name="search" value="{{ request('search') }}" placeholder="Ej. 76.543.210-k"
                                    class="w-full pl-9 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-300 focus:bg-white">
                         </div>
+                    </div>
+
+                    <!-- Estado de Pago -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Estado de Pago</label>
+                        <select name="payment_status"
+                                class="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-orange-300 focus:bg-white font-medium text-gray-700">
+                            <option value="">Todos los Estados</option>
+                            <option value="adeudado" {{ request('payment_status') === 'adeudado' ? 'selected' : '' }}>Adeudados</option>
+                            <option value="pagado" {{ request('payment_status') === 'pagado' ? 'selected' : '' }}>Pagados</option>
+                        </select>
                     </div>
 
                     <!-- Fecha Desde -->
@@ -78,7 +93,7 @@
 
                     <!-- Botones de Acción -->
                     <div class="flex items-center space-x-2">
-                        <button type="submit" class="flex-grow bg-orange-500 hover:bg-orange-600 text-white font-medium py-1.5 px-4 rounded-lg text-xs transition-all shadow-sm shadow-orange-500/20 flex items-center justify-center space-x-1">
+                        <button type="submit" class="flex-grow bg-orange-500 hover:bg-orange-600 text-white font-medium py-1.5 px-4 rounded-lg text-xs transition-all shadow-sm shadow-orange-500/20 flex items-center justify-center space-x-1 cursor-pointer">
                             <i data-lucide="search" class="w-4 h-4"></i>
                             <span>Buscar</span>
                         </button>
@@ -101,5 +116,6 @@
     <script>
         lucide.createIcons();
     </script>
+    @stack('scripts')
 </body>
 </html>

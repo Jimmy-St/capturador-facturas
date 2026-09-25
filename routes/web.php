@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CaptureController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\InvoicePaymentController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas de Autenticación
@@ -33,5 +34,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::patch('/invoices/{invoice}/review', [InvoiceController::class, 'markAsReviewed'])->name('invoices.review');
         Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.update-status');
+
+        // Gestión de pagos de facturas
+        Route::post('/invoices/{invoice}/payments', [InvoicePaymentController::class, 'store'])->name('invoices.payments.store');
+        Route::delete('/invoices/{invoice}/payments/{payment}', [InvoicePaymentController::class, 'destroy'])->name('invoices.payments.destroy');
+        Route::patch('/invoices/{invoice}/payment-status', [InvoicePaymentController::class, 'toggleStatus'])->name('invoices.payments.status');
     });
 });

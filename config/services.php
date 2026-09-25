@@ -17,7 +17,8 @@ return [
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
         'prompt' => env('GEMINI_PROMPT'),
-        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        'timeout' => (int) env('GEMINI_TIMEOUT', 20),
     ],
 
     'postmark' => [

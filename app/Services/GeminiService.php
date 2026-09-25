@@ -11,10 +11,13 @@ class GeminiService
 
     protected string $model;
 
+    protected int $timeout;
+
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key', env('GEMINI_API_KEY', ''));
-        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.5-flash-lite'));
+        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.5-flash'));
+        $this->timeout = (int) config('services.gemini.timeout', env('GEMINI_TIMEOUT', 20));
     }
 
     /**
@@ -86,7 +89,7 @@ class GeminiService
             ],
         ];
 
-        $response = Http::timeout(60)
+        $response = Http::timeout($this->timeout)
             ->withHeaders([
                 'Content-Type' => 'application/json',
             ])->post($url, $payload);

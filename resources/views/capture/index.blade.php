@@ -23,8 +23,11 @@
             user-select: none;
         }
     </style>
-</head>
-<body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col" x-data="documentScanner()">
+<body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col" 
+      x-data="documentScanner({
+          maxDimension: {{ config('invoices.max_dimension', 1800) }},
+          clientQuality: {{ config('invoices.client_quality', 0.85) }}
+      })">
 
     <!-- HEADER FLOTANTE TIPO APP -->
     <header class="absolute top-0 inset-x-0 z-40 bg-gradient-to-b from-black/85 via-black/40 to-transparent p-4 flex items-center justify-between">
@@ -185,7 +188,9 @@
     <!-- SCRIPT DE CÁMARA, GEOMETRÍA DEL CANVAS Y AJAX -->
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('documentScanner', () => ({
+            Alpine.data('documentScanner', (config = {}) => ({
+                maxDimension: (config && config.maxDimension) || 1800,
+                clientQuality: (config && config.clientQuality) || 0.85,
                 stream: null,
                 isCameraReady: false,
                 cameraError: false,
@@ -283,7 +288,7 @@
                     }
 
                     this.isProcessing = true;
-                    this.loadingText = 'Optimizando encuadre oficio...';
+                    this.loadingText = 'Optimizando encuadre...';
                     this.errorMessage = '';
                     this.successMessage = '';
 
@@ -319,19 +324,34 @@
                     cropWidth = Math.min(cropWidth, videoWidth - cropX);
                     cropHeight = Math.min(cropHeight, videoHeight - cropY);
 
-                    // 7. Renderizar en canvas nativo con la resolución real del recorte
+                    // 7. Escalado inteligente por TAMAÑO (Doble Compresión - Local)
+                    let targetWidth = Math.round(cropWidth);
+                    let targetHeight = Math.round(cropHeight);
+                    const maxDim = this.maxDimension;
+
+                    if (targetWidth > maxDim || targetHeight > maxDim) {
+                        if (targetWidth >= targetHeight) {
+                            targetHeight = Math.round((targetHeight * maxDim) / targetWidth);
+                            targetWidth = maxDim;
+                        } else {
+                            targetWidth = Math.round((targetWidth * maxDim) / targetHeight);
+                            targetHeight = maxDim;
+                        }
+                    }
+
+                    // 8. Renderizar en canvas optimizado
                     const croppedCanvas = document.createElement('canvas');
-                    croppedCanvas.width = Math.round(cropWidth);
-                    croppedCanvas.height = Math.round(cropHeight);
+                    croppedCanvas.width = targetWidth;
+                    croppedCanvas.height = targetHeight;
                     const croppedCtx = croppedCanvas.getContext('2d');
 
                     croppedCtx.drawImage(
                         video, 
                         cropX, cropY, cropWidth, cropHeight, 
-                        0, 0, croppedCanvas.width, croppedCanvas.height
+                        0, 0, targetWidth, targetHeight
                     );
 
-                    this.loadingText = 'Enviando a Lector OCR...';
+                    this.loadingText = 'Analizando documento...';
 
                     croppedCanvas.toBlob(async (blob) => {
                         if (!blob) {
@@ -344,7 +364,7 @@
                         formData.append('image', blob, 'invoice_scan.jpg');
 
                         await this.sendFormData(formData);
-                    }, 'image/jpeg', 0.95);
+                    }, 'image/jpeg', this.clientQuality);
                 },
 
                 async handleFileUpload(event) {
@@ -352,16 +372,60 @@
                     if (!file) return;
 
                     this.isProcessing = true;
-                    this.loadingText = 'Enviando imagen a Lector OCR...';
+                    this.loadingText = 'Optimizando foto de galería...';
                     this.errorMessage = '';
                     this.successMessage = '';
 
-                    const formData = new FormData();
-                    formData.append('image', file);
+                    try {
+                        // Pre-escalado local en el navegador antes de subir fotos pesadas de galería
+                        const optimizedBlob = await this.downscaleImageFile(file, this.maxDimension, this.clientQuality);
+                        this.loadingText = 'Analizando documento...';
 
-                    await this.sendFormData(formData);
-                    // Limpiar el input para permitir seleccionar la misma imagen de nuevo
-                    event.target.value = '';
+                        const formData = new FormData();
+                        formData.append('image', optimizedBlob, 'gallery_invoice.jpg');
+
+                        await this.sendFormData(formData);
+                    } catch (e) {
+                        console.error('Error pre-escalando imagen de galería:', e);
+                        // Fallback al archivo original
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        await this.sendFormData(formData);
+                    } finally {
+                        event.target.value = '';
+                    }
+                },
+
+                downscaleImageFile(file, maxDim, quality) {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            let w = img.width;
+                            let h = img.height;
+
+                            if (w > maxDim || h > maxDim) {
+                                if (w >= h) {
+                                    h = Math.round((h * maxDim) / w);
+                                    w = maxDim;
+                                } else {
+                                    w = Math.round((w * maxDim) / h);
+                                    h = maxDim;
+                                }
+                            }
+
+                            const canvas = document.createElement('canvas');
+                            canvas.width = w;
+                            canvas.height = h;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, w, h);
+
+                            canvas.toBlob((blob) => {
+                                resolve(blob || file);
+                            }, 'image/jpeg', quality);
+                        };
+                        img.onerror = () => resolve(file);
+                        img.src = URL.createObjectURL(file);
+                    });
                 },
 
                 async sendFormData(formData) {
@@ -379,17 +443,17 @@
 
                         if (response.ok && result.success) {
                             if (result.is_operator) {
-                                this.loadingText = '¡Factura #' + (result.folio || '') + ' registrada!';
-                                this.successMessage = 'Factura #' + (result.folio || '') + ' guardada exitosamente. Cámara lista para la siguiente captura.';
+                                this.loadingText = '¡Documento registrado!';
+                                this.successMessage = '¡Documento procesado y guardado con éxito! Cámara lista para el siguiente documento.';
                                 setTimeout(() => {
                                     this.isProcessing = false;
                                     this.refreshIcons();
                                     setTimeout(() => {
                                         this.successMessage = '';
-                                    }, 4500);
-                                }, 1200);
+                                    }, 3500);
+                                }, 800);
                             } else {
-                                this.loadingText = '¡Lectura exitosa! Redirigiendo a auditoría...';
+                                this.loadingText = '¡Documento procesado con éxito! Redirigiendo a auditoría...';
                                 if (this.stream) {
                                     this.stream.getTracks().forEach(track => track.stop());
                                 }
@@ -403,7 +467,7 @@
 
                     } catch (err) {
                         this.isProcessing = false;
-                        this.errorMessage = 'Error de red al comunicarse con el servidor.';
+                        this.errorMessage = 'Error de conexión con el servidor. Por favor, reintenta.';
                         console.error('Error al procesar factura:', err);
                         this.refreshIcons();
                     }
