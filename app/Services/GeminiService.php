@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 class GeminiService
@@ -16,7 +17,7 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key', env('GEMINI_API_KEY', ''));
-        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.5-flash'));
+        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-flash-latest'));
         $this->timeout = (int) config('services.gemini.timeout', env('GEMINI_TIMEOUT', 20));
     }
 
@@ -89,26 +90,40 @@ class GeminiService
             ],
         ];
 
-        $response = Http::timeout($this->timeout)
+        $response = Http::retry(3, 1000, function ($exception, $request) {
+            return $exception instanceof RequestException
+                && in_array($exception->response?->status(), [429, 500, 502, 503, 504]);
+        })->timeout($this->timeout)
             ->withHeaders([
                 'Content-Type' => 'application/json',
             ])->post($url, $payload);
 
         if ($response->failed()) {
-            throw new Exception('Gemini API connection error: '.$response->body());
+            $status = $response->status();
+            $body = $response->body();
+
+            if ($status === 503 || str_contains($body, '503') || str_contains($body, 'UNAVAILABLE') || str_contains($body, 'high demand')) {
+                throw new Exception('Los servidores de la lectura están experimentando una alta demanda temporal. Por favor vuelve a "Capturar Documento"');
+            }
+
+            if ($status === 429 || str_contains($body, 'RESOURCE_EXHAUSTED')) {
+                throw new Exception('Límite de peticiones alcanzado en la API. Por favor espera un momento e intenta nuevamente.');
+            }
+
+            throw new Exception('Error al conectar con el servicio OCR: '.$body);
         }
 
         $responseData = $response->json();
         $jsonStringResponse = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
         if (! $jsonStringResponse) {
-            throw new Exception('Gemini response does not contain the expected format.');
+            throw new Exception('OCR response does not contain the expected format.');
         }
 
         $parsed = json_decode($jsonStringResponse, true);
 
         if (! is_array($parsed)) {
-            throw new Exception('Gemini response is not valid JSON.');
+            throw new Exception('OCR response is not valid JSON.');
         }
 
         // Extraer consumo real de tokens desde usageMetadata en la respuesta raíz de Google

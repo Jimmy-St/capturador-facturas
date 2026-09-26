@@ -185,7 +185,7 @@
         </div>
     </footer>
 
-    <!-- SCRIPT DE CÁMARA, GEOMETRÍA DEL CANVAS Y AJAX -->
+    <!-- CÁMARA, CANVAS Y AJAX -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('documentScanner', (config = {}) => ({
@@ -292,39 +292,39 @@
                     this.errorMessage = '';
                     this.successMessage = '';
 
-                    // 1. Obtener geometrías de pantalla
+                    // Obtener geometría de pantalla
                     const videoRect = video.getBoundingClientRect();
                     const guideRect = guideBox.getBoundingClientRect();
 
                     const clientWidth = videoRect.width;
                     const clientHeight = videoRect.height;
 
-                    // 2. Calcular escala de 'object-cover' (escala uniforme para llenar el contenedor)
+                    // Calcular escala de 'object-cover' (escala uniforme para llenar el contenedor)
                     const scale = Math.max(clientWidth / videoWidth, clientHeight / videoHeight);
                     const renderedWidth = videoWidth * scale;
                     const renderedHeight = videoHeight * scale;
 
-                    // 3. Desplazamiento por centrado (object-position: center center por defecto)
+                    // Desplazamiento por centrado (object-position: center center por defecto)
                     const offsetX = (clientWidth - renderedWidth) / 2;
                     const offsetY = (clientHeight - renderedHeight) / 2;
 
-                    // 4. Posición del marco guía respecto a los píxeles renderizados
+                    // Posición del marco guía respecto a los píxeles renderizados
                     const boxX = guideRect.left - videoRect.left;
                     const boxY = guideRect.top - videoRect.top;
 
-                    // 5. Mapeo a las coordenadas nativas del sensor
+                    // Mapeo a las coordenadas nativas del sensor
                     let cropX = (boxX - offsetX) / scale;
                     let cropY = (boxY - offsetY) / scale;
                     let cropWidth = guideRect.width / scale;
                     let cropHeight = guideRect.height / scale;
 
-                    // 6. Clamp seguro dentro de los límites del fotograma
+                    // Clamp seguro dentro de los límites del fotograma
                     cropX = Math.max(0, Math.min(cropX, videoWidth - 10));
                     cropY = Math.max(0, Math.min(cropY, videoHeight - 10));
                     cropWidth = Math.min(cropWidth, videoWidth - cropX);
                     cropHeight = Math.min(cropHeight, videoHeight - cropY);
 
-                    // 7. Escalado inteligente por TAMAÑO (Doble Compresión - Local)
+                    // Escalado inteligente por TAMAÑO (Doble Compresión - Local)
                     let targetWidth = Math.round(cropWidth);
                     let targetHeight = Math.round(cropHeight);
                     const maxDim = this.maxDimension;
@@ -339,7 +339,7 @@
                         }
                     }
 
-                    // 8. Renderizar en canvas optimizado
+                    // Renderizar en canvas optimizado
                     const croppedCanvas = document.createElement('canvas');
                     croppedCanvas.width = targetWidth;
                     croppedCanvas.height = targetHeight;
@@ -442,23 +442,15 @@
                         const result = await response.json();
 
                         if (response.ok && result.success) {
-                            if (result.is_operator) {
-                                this.loadingText = '¡Documento registrado!';
-                                this.successMessage = '¡Documento procesado y guardado con éxito! Cámara lista para el siguiente documento.';
+                            this.loadingText = '¡Documento recibido!';
+                            this.successMessage = '¡Documento enviado a procesamiento! Cámara lista para el siguiente documento.';
+                            setTimeout(() => {
+                                this.isProcessing = false;
+                                this.refreshIcons();
                                 setTimeout(() => {
-                                    this.isProcessing = false;
-                                    this.refreshIcons();
-                                    setTimeout(() => {
-                                        this.successMessage = '';
-                                    }, 3500);
-                                }, 800);
-                            } else {
-                                this.loadingText = '¡Documento procesado con éxito! Redirigiendo a auditoría...';
-                                if (this.stream) {
-                                    this.stream.getTracks().forEach(track => track.stop());
-                                }
-                                window.location.href = `/invoices/${result.invoice_id}`;
-                            }
+                                    this.successMessage = '';
+                                }, 3500);
+                            }, 800);
                         } else {
                             this.isProcessing = false;
                             this.errorMessage = result.error || 'Ocurrió un error al procesar el documento con OCR.';

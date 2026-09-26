@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessInvoiceOcr;
 use App\Models\Invoice;
 use App\Services\GeminiService;
 use Carbon\Carbon;
@@ -40,7 +41,7 @@ class InvoiceController extends Controller
 
     public function show($id)
     {
-        $invoice = Invoice::with(['user', 'payments.user'])->findOrFail($id);
+        $invoice = Invoice::with(['user', 'payments.user'])->find($id);
 
         return view('invoices.show', compact('invoice'));
     }
@@ -85,6 +86,9 @@ class InvoiceController extends Controller
         return redirect()->back()->with('success', 'Documento actualizado correctamente.');
     }
 
+    /**
+     * Recept invoice capture from mobile scanner, store temp file and dispatch background OCR job.
+     */
     public function processInvoice(Request $request): JsonResponse
     {
         $request->validate([
@@ -94,60 +98,26 @@ class InvoiceController extends Controller
             'image.image' => 'El archivo capturado no es una imagen válida.',
         ]);
 
-        $file = $request->file('image');
-        $rawContent = $file->get();
-        $prompt = config('services.gemini.prompt', env('GEMINI_PROMPT')) ?? '';
-
-        // Pre-optimización del documento con GD para garantizar ultra-baja latencia y bajo consumo de tokens
-        $optimizedImageContent = $this->optimizeInvoiceImage($rawContent);
-
         try {
-            $response = $this->geminiService->analyzeInvoiceFromContent(
-                $optimizedImageContent,
-                'image/jpeg',
-                $prompt
-            );
+            $file = $request->file('image');
+            $tempFileName = 'temp_invoices/'.(string) Str::uuid().'.jpg';
 
-            // Normalización del campo error para evitar falsos positivos
-            $rawError = trim((string) ($response['error'] ?? ''));
-            $ignorableErrors = ['', 'none', 'ninguno', 'null', 'n/a', 'no error', 'sin error', 'ok', 'no', 'false'];
-            if ($rawError !== '' && ! in_array(mb_strtolower($rawError), $ignorableErrors, true)) {
-                return response()->json([
-                    'success' => false,
-                    'error' => $rawError,
-                ], 422);
-            }
+            // Guardar imagen recibida de inmediato en almacenamiento local temporal
+            Storage::disk('local')->put($tempFileName, $file->get());
 
-            $uuidName = (string) Str::uuid().'.jpg';
-            $imagePath = 'invoices/'.$uuidName;
-            Storage::disk('public')->put($imagePath, $optimizedImageContent);
-
-            $invoice = Invoice::create([
-                'document_type' => ! empty($response['tipo_documento']) ? (string) $response['tipo_documento'] : 'FACTURA ELECTRÓNICA',
-                'folio' => ! empty($response['numero_documento']) ? (string) $response['numero_documento'] : 'S/N',
-                'rut' => ! empty($response['rut_proveedor']) ? (string) $response['rut_proveedor'] : 'N/A',
-                'supplier' => ! empty($response['nombre_proveedor']) ? (string) $response['nombre_proveedor'] : 'PROVEEDOR NO IDENTIFICADO',
-                'document_date' => $this->parseDocumentDate($response['fecha_emision'] ?? null),
-                'reception_date' => now(),
-                'amount' => $this->parseAmount($response['total'] ?? 0),
-                'fidelity' => $this->mapFidelity((int) ($response['fidelidad_estimada'] ?? 0)),
-                'tokens_cost' => (int) ($response['tokens_cost'] ?? 0),
-                'image_path' => $imagePath,
-                'raw_response_json' => json_encode($response, JSON_UNESCAPED_UNICODE),
-                'user_id' => auth()->id(),
-            ]);
+            // Despachar el Job a la cola en segundo plano (asíncrono)
+            ProcessInvoiceOcr::dispatch($tempFileName, 'image/jpeg', (int) auth()->id());
 
             return response()->json([
                 'success' => true,
-                'invoice_id' => $invoice->id,
                 'is_operator' => auth()->user()?->isOperator() ?? false,
-                'message' => 'Documento procesado exitosamente.',
+                'message' => 'Documento recibido e ingresado a la cola de procesamiento.',
             ]);
 
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Error al recibir el documento: '.$e->getMessage(),
             ], 500);
         }
     }

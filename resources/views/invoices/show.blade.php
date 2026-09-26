@@ -17,8 +17,7 @@
 
 @if(isset($invoice))
 
-<!-- CONTENEDOR RAÍZ CON TODAS LAS VARIABLES DE ALPINE -->
-<div class="space-y-6" x-data="invoiceShow({
+<div class="space-y-2" x-data="invoiceShow({
     invoiceId: {{ $invoice->id }},
     totalInvoice: {{ (float) $invoice->amount }},
     initialPaid: {{ (float) $invoice->totalPaid() }},
@@ -265,7 +264,7 @@
                                 'ring-2 ring-emerald-400 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md animate-pulse': (paymentStatus === 'adeudado' && remainingAmount() <= 0.001),
                                 'bg-slate-900 hover:bg-slate-800 text-white': (paymentStatus === 'adeudado' && remainingAmount() > 0.001)
                             }">
-                        <!-- <i data-lucide="badge-dollar-sign" class="w-4 h-4"></i> -->
+                        
                         <span x-text="getStatusButtonText()"></span>
                     </button>
 
@@ -510,19 +509,19 @@
 @else
 <!-- ESTADO: FACTURA NO ENCONTRADA -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-10 text-center max-w-xl mx-auto space-y-4 my-10">
-    <div class="w-14 h-14 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto">
-        <i data-lucide="file-search" class="w-7 h-7"></i>
+    <div class="w-20 h-20 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto">
+        <i data-lucide="file-search" class="w-10 h-10"></i>
     </div>
     <div class="space-y-1">
         <h3 class="text-base font-bold text-gray-800">Documento no encontrado</h3>
         <p class="text-xs text-gray-500">La factura que intentas buscar no existe o fue eliminada del sistema.</p>
     </div>
-    <div class="pt-2">
+    <!-- <div class="pt-2">
         <a href="{{ route('dashboard') }}" class="inline-flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-sm">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             <span>Volver al Dashboard</span>
         </a>
-    </div>
+    </div> -->
 </div>
 @endif
 

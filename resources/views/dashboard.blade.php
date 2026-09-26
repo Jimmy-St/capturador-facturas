@@ -28,7 +28,7 @@
                 <span class="text-3xl font-black text-amber-700 tracking-tight mx-8">{{ number_format($stats['adeudado_count'] ?? 0, 0, ',', '.') }}</span>
                 <span class="text-xs text-gray-500 font-medium">$ {{ number_format($stats['total_amount_adeudado'] ?? 0, 0, ',', '.') }} adeudado</span>
             </div>
-            <i data-lucide="clock" class="w-28 h-28 absolute -right-4 -bottom-4 text-amber-50 pointer-events-none -rotate-12"></i>
+            <i data-lucide="file-x-corner" class="w-28 h-28 absolute -right-4 -bottom-4 text-amber-50 pointer-events-none -rotate-12"></i>
         </a>
 
         <!-- Total Pagados -->
