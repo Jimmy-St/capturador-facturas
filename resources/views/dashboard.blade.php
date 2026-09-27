@@ -56,32 +56,12 @@
             
             <!-- Botones / Badges de Filtro por Fidelidad -->
             <div class="flex flex-wrap items-center gap-1.5">
-                <span class="text-xs text-gray-400 font-medium mr-1">Fidelidad OCR:</span>
-                
-                <a href="{{ route('dashboard', request()->except('fidelity')) }}" 
-                   class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all {{ request('fidelity') == '' ? 'bg-slate-900 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                    Todas
-                </a>
-                
-                <a href="{{ route('dashboard', array_merge(request()->query(), ['fidelity' => 'baja'])) }}" 
-                   class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all {{ request('fidelity') == 'baja' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60' }}">
-                    Baja
-                </a>
-
-                <a href="{{ route('dashboard', array_merge(request()->query(), ['fidelity' => 'media'])) }}" 
-                   class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all {{ request('fidelity') == 'media' ? 'bg-orange-600 text-white shadow-sm' : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200/60' }}">
-                    Media
-                </a>
-
-                <a href="{{ route('dashboard', array_merge(request()->query(), ['fidelity' => 'alta'])) }}" 
-                   class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all {{ request('fidelity') == 'alta' ? 'bg-sky-600 text-white shadow-sm' : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200/60' }}">
-                    Alta
-                </a>                        
-
-                <a href="{{ route('dashboard', array_merge(request()->query(), ['fidelity' => 'vista'])) }}" 
-                   class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all {{ request('fidelity') == 'vista' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60' }}">
-                    Vista
-                </a>
+                <span class="text-xs text-gray-400 font-medium mr-1">Fidelidad OCR:</span>                
+                <x-fidelity-button status="todas" />
+                <x-fidelity-button status="baja" />
+                <x-fidelity-button status="media" />
+                <x-fidelity-button status="alta" />
+                <x-fidelity-button status="vista" />
             </div>
         </div>
 
