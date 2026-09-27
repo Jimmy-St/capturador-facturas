@@ -13,9 +13,7 @@ use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
 {
-    public function __construct(
-        protected GeminiService $geminiService
-    ) {}
+    public function __construct(protected GeminiService $geminiService) {}
 
     public function index(Request $request)
     {

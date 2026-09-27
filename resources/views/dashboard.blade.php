@@ -117,17 +117,7 @@
 
                             <!-- Estado de Pago Badge -->
                             <td class="py-3.5 px-4">
-                                @if($invoice->payment_status === 'pagado')
-                                    <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                        <span>PAGADO</span>
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                        <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i>
-                                        <span>ADEUDADO</span>
-                                    </span>
-                                @endif
+                                <x-state-badge :status="$invoice->payment_status" />
                             </td>
 
                             <!-- Fecha Recepción -->
@@ -146,37 +136,9 @@
                                 @endif
                             </td>
 
-                            <!-- Fidelidad IA -->
+                            <!-- Fidelidad OCR -->
                             <td class="py-3.5 px-4 text-right pr-6">
-                                @php
-                                    $status = strtolower($invoice->fidelity);
-                                @endphp
-
-                                @if($invoice->is_reviewed)
-                                    <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <i data-lucide="circle-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                        <span>Vista</span>
-                                    </span>
-                                @elseif($status === 'baja')
-                                    <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                        <i data-lucide="gauge" class="w-3.5 h-3.5"></i>
-                                        <span>Baja</span>
-                                    </span>
-                                @elseif($status === 'media')
-                                    <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200">
-                                        <i data-lucide="gauge" class="w-3.5 h-3.5"></i>
-                                        <span>Media</span>
-                                    </span>
-                                @elseif($status === 'alta' || $status === 'fidelidad ok')
-                                    <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
-                                        <i data-lucide="gauge" class="w-3.5 h-3.5"></i>
-                                        <span>Alta</span>
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
-                                        {{ ucfirst($invoice->fidelity) }}
-                                    </span>
-                                @endif
+                                <x-fidelity-badge :status="$invoice->is_reviewed ? 'visto' : $invoice->fidelity" />
                             </td>
 
                         </tr>

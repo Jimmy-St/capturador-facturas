@@ -65,7 +65,7 @@
                         <div class="flex items-center space-x-2">
                             <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ $invoice->document_type }}</span>
                         </div>
-                        <h2 class="text-xl font-black text-gray-900 mt-0.5">
+                        <h2 class="text-xl font-bold text-gray-900 mt-0.5">
                             #{{ $invoice->folio }}
                         </h2>
                     </div>
@@ -172,65 +172,28 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-2">
                         <i data-lucide="code" class="w-4 h-4 text-orange-500"></i>
-                        <h3 class="font-bold text-gray-800 text-xs uppercase tracking-wider">Payload de Respuesta IA</h3>
+                        <h3 class="font-bold text-gray-800 text-xs uppercase tracking-wider">Payload de Respuesta OCR</h3>
                     </div>
                     <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-mono">JSON Raw</span>
                 </div>
-                <div class="bg-gray-900 rounded-lg p-3.5 overflow-x-auto text-[11px] font-mono text-emerald-400 max-h-56">
-                    <pre><code>{{ $invoice->raw_response_json ? json_encode(json_decode($invoice->raw_response_json), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '// No hay datos registrados' }}</code></pre>
+                <div class="bg-zinc-800 border border-green-900 rounded-lg p-3.5 overflow-x-auto text-[11px] font-mono max-h-56 shadow-inner">
+                    <pre><code class="text-green-500">{{ $invoice->raw_response_json ? json_encode(json_decode($invoice->raw_response_json), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '// No hay datos registrados' }}</code></pre>
                 </div>
             </div>
-
         </div>
-
         <!-- Columna Derecha: Imagen Original + Proceso Completo de Pago Unificado -->
         <div class="space-y-5">
-
-            <!-- 1. Tarjeta: Factura Original (Captura Inicial con IA) -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-3">
-                
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <i data-lucide="file-check" class="w-4 h-4 text-orange-500"></i>
-                        <h3 class="font-bold text-gray-800 text-xs uppercase tracking-wider">Documento Original</h3>
-                    </div>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase
-                        {{ $invoice->fidelity == 'alta' || $invoice->fidelity >= 90 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : ($invoice->fidelity == 'media' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200') }}">
-                        Fiabilidad: {{ ucfirst($invoice->fidelity) }}
-                    </span>
-                </div>
-
-                <!-- Contenedor miniatura con clic para abrir Viewer.js -->
-                <div class="bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex flex-col items-center justify-center p-2 min-h-[180px] cursor-pointer group relative shadow-inner"
-                     @click="openModal(originalImageUrl, 'Factura #{{ $invoice->folio }}')" title="Clic para ampliar documento original">
-                    
-                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center z-10">
-                        <span class="bg-white/95 text-gray-800 text-xs font-bold px-3 py-1.5 rounded-lg shadow-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1.5">
-                            <i data-lucide="zoom-in" class="w-4 h-4 text-orange-500"></i>
-                            <span>Ver en grande</span>
-                        </span>
-                    </div>
-                    
-                    @if($invoice->image_path)
-                        <img src="{{ asset('storage/' . $invoice->image_path) }}" alt="Factura #{{ $invoice->folio }}" class="max-h-[200px] w-full object-cover rounded-md shadow-sm">
-                    @else
-                        <div class="text-center p-6 space-y-2 text-gray-400 pointer-events-none">
-                            <i data-lucide="image-off" class="w-8 h-8 mx-auto text-gray-300"></i>
-                            <p class="text-xs">Sin imagen asociada</p>
-                        </div>
-                    @endif
-                </div>
-
-            </div>
-
-            <!-- 2. RECUADRO ÚNICO UNIFICADO: ESTADO + REGISTRAR PAGO + HISTORIAL -->
+            <!-- Tarjeta: Factura Original (Captura Inicial OCR) -->
+             @include('components.invoice.image')
+            
+            <!-- RECUADRO UNIFICADO: ESTADO + REGISTRAR PAGO + HISTORIAL -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-5">
                 
-                <!-- SECCIÓN 1: ESTADO DE PAGO -->
+                <!-- ESTADO DE PAGO -->
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <h3 class="font-bold text-gray-900 text-sm">Estado de pago</h3>
-                        <span class="text-xs font-black px-2.5 py-0.5 rounded-md uppercase tracking-wide"
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wide"
                               :class="paymentStatus === 'pagado' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'"
                               x-text="paymentStatus === 'pagado' ? 'PAGADO' : 'ADEUDADO'">
                         </span>
@@ -240,86 +203,69 @@
                     <div class="grid grid-cols-3 gap-2 py-2 text-center bg-gray-50 rounded-lg border border-gray-100">
                         <div>
                             <span class="block text-[10px] font-bold text-gray-400 uppercase">Total</span>
-                            <span class="text-xs font-black text-gray-900" x-text="'$' + formatCLP(totalInvoice)"></span>
+                            <span class="text-xs font-bold text-gray-900" x-text="'$' + formatCLP(totalInvoice)"></span>
                         </div>
                         <div class="border-x border-gray-200">
                             <span class="block text-[10px] font-bold text-gray-400 uppercase">Abonado</span>
-                            <span class="text-xs font-black text-emerald-600" x-text="'$' + formatCLP(totalPaid)"></span>
+                            <span class="text-xs font-bold text-emerald-600" x-text="'$' + formatCLP(totalPaid)"></span>
                         </div>
                         <div>
                             <span class="block text-[10px] font-bold text-gray-400 uppercase">Saldo</span>
-                            <span class="text-xs font-black"
-                                  :class="remainingAmount() <= 0.001 ? 'text-gray-400' : 'text-rose-600'"
-                                  x-text="'$' + formatCLP(remainingAmount())"></span>
+                            <span class="text-xs font-bold" :class="remainingAmount() <= 0.001 ? 'text-gray-400' : 'text-rose-600'" x-text="'$' + formatCLP(remainingAmount())"></span>
                         </div>
                     </div>
 
                     <!-- Botón de Conmutación de Estado -->
-                    <button type="button"
-                            @click="togglePaymentStatus()"
-                            :disabled="isUpdatingStatus"
-                            class="w-full py-2.5 px-4 rounded-lg font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-sm"
-                            :class="{
-                                'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20': paymentStatus === 'pagado',
-                                'ring-2 ring-emerald-400 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md animate-pulse': (paymentStatus === 'adeudado' && remainingAmount() <= 0.001),
-                                'bg-slate-900 hover:bg-slate-800 text-white': (paymentStatus === 'adeudado' && remainingAmount() > 0.001)
-                            }">
-                        
+                    <button type="button" @click="togglePaymentStatus()" :disabled="isUpdatingStatus" class="w-full py-2.5 px-4 rounded-lg font-bold text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-sm"
+                        :class="{
+                            'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20': paymentStatus === 'pagado',
+                            'ring-2 ring-emerald-400 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md animate-pulse': (paymentStatus === 'adeudado' && remainingAmount() <= 0.001),
+                            'bg-slate-900 hover:bg-slate-800 text-white': (paymentStatus === 'adeudado' && remainingAmount() > 0.001)
+                        }">                        
                         <span x-text="getStatusButtonText()"></span>
                     </button>
 
-                    <!-- Barra fina de progreso con porcentaje lateral -->
+                    <!-- Barra de progreso -->
                     <div class="flex items-center space-x-3 pt-1">
                         <div class="flex-1 bg-slate-100 h-1 rounded-full overflow-hidden border border-slate-200/50">
-                            <div class="h-full transition-all duration-500"
-                                 :class="percentPaid() >= 100 ? 'bg-emerald-500' : 'bg-orange-500'"
-                                 :style="'width: ' + percentPaid() + '%'"></div>
+                            <div class="h-full transition-all duration-500" :class="percentPaid() >= 100 ? 'bg-emerald-500' : 'bg-orange-500'" :style="'width: ' + percentPaid() + '%'"></div>
                         </div>
                         <span class="text-[11px] font-bold text-gray-500 shrink-0 min-w-[36px] text-right" x-text="percentPaid() + '%'"></span>
                     </div>
                 </div>
 
-                <!-- SECCIÓN 2: REGISTRAR PAGO -->
-                <div class="pt-4 border-t border-gray-100 space-y-3">
-                    
+                <!-- REGISTRAR PAGO -->
+                <div class="pt-4 border-t border-gray-100 space-y-3">                    
                     <h3 class="font-bold text-gray-900 text-sm">Registrar Pago</h3>
 
                     <!-- Mensajes de feedback -->
                     <div x-show="paymentError" x-text="paymentError" class="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs font-semibold text-rose-700" style="display: none;"></div>
                     <div x-show="paymentSuccess" x-text="paymentSuccess" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-semibold text-emerald-700" style="display: none;"></div>
 
-                    <form @submit.prevent="submitPayment()" class="space-y-3">
-                        
+                    <form @submit.prevent="submitPayment()" class="space-y-3">                        
                         <!-- Monto y Sugerencia de Saldo -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="text-xs font-semibold text-gray-600">Monto del Pago ($)</label>
-                                <button type="button" 
-                                        @click="newPayment.amount = remainingAmount()" 
-                                        class="text-[11px] text-orange-600 hover:text-orange-700 font-bold underline cursor-pointer">
+                                <button type="button" @click="newPayment.amount = remainingAmount()" class="text-[11px] text-orange-600 hover:text-orange-700 font-bold underline cursor-pointer">
                                     Saldo sugerido
                                 </button>
                             </div>
-                            <input type="number" step="0.01" min="1" x-model="newPayment.amount" required
-                                   placeholder="Ej. 50000"
-                                   class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-gray-900 focus:bg-white focus:border-emerald-500 outline-none transition">
+                            <input type="number" step="0.01" min="1" x-model="newPayment.amount" required placeholder="Ej. 50000" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-gray-900 focus:bg-white focus:border-emerald-500 outline-none transition">
                         </div>
 
                         <!-- Fecha de Pago -->
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Fecha del Pago</label>
-                            <input type="date" x-model="newPayment.payment_date" required
-                                   class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none transition">
+                            <input type="date" x-model="newPayment.payment_date" required class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none transition">
                         </div>
 
                         <!-- Método de Pago y Referencia -->
                         <div class="grid grid-cols-2 gap-2.5">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">Método</label>
-                                <select x-model="newPayment.payment_method"
-                                        class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-2 text-xs font-semibold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none transition">
-                                    <option value="cheque">Cheque al Día</option>
-                                    <option value="cheque_fecha">Cheque a Fecha</option>
+                                <select x-model="newPayment.payment_method" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-2 text-xs font-semibold text-gray-800 focus:bg-white focus:border-emerald-500 outline-none transition">
+                                    <option value="cheque">Cheque</option>
                                     <option value="transferencia">Transferencia</option>
                                     <option value="efectivo">Efectivo</option>
                                     <option value="otro">Otro</option>
@@ -351,7 +297,7 @@
                                 <div x-show="!paymentPreview && !isConvertingPdf" class="space-y-1 py-1.5 cursor-pointer" @click="document.getElementById('payment-file-input').click()">
                                     <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-gray-400"></i>
                                     <p class="text-xs font-bold text-gray-700">Subir foto o PDF</p>
-                                    <p class="text-[10px] text-gray-400">Conversión automática de PDF a JPG</p>
+                                    <p class="text-[10px] text-gray-400">Conversión automática a JPG</p>
                                 </div>
 
                                 <!-- Estado: Convirtiendo -->
@@ -422,7 +368,7 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-2">
                                         <span class="text-[11px] font-bold text-emerald-700" x-text="'Pago #' + (index + 1)"></span>
-                                        <span class="text-sm font-black text-gray-900" x-text="'$' + payment.formatted_amount"></span>
+                                        <span class="text-sm font-bold text-gray-900" x-text="'$' + payment.formatted_amount"></span>
                                     </div>
                                     
                                     <button type="button" 
@@ -457,53 +403,17 @@
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
-
                         </template>
                     </div>
-
                 </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- Modal Alpine.js con Viewer.js Universal (Para Factura y Cheques) -->
-    <div x-show="showModal" 
-         x-transition.opacity
-         class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4"
-         style="display: none;">
-        
-        <div @click.away="closeModal()" class="bg-white rounded-lg w-[85vw] h-[88vh] p-5 flex flex-col justify-between relative shadow-2xl">
-            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-                <h3 class="font-bold text-gray-900 text-sm flex items-center space-x-2">
-                    <i data-lucide="scan-search" class="w-4 h-4 text-orange-500"></i>
-                    <span x-text="modalTitle"></span>
-                </h3>
-                <button @click="closeModal()" class="text-gray-400 hover:text-gray-600 p-1 rounded-md cursor-pointer">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <!-- Contenedor Viewer.js -->
-            <div class="bg-gray-900 rounded-lg overflow-hidden flex-1 my-3 relative">
-                <div id="image-viewer-container" class="w-full h-full">
-                    <img id="image-viewer-target" :src="modalImageUrl" :alt="modalTitle" style="display:none;">
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center pt-2 text-xs text-gray-500">
-                <span>Usa la rueda del ratón para hacer zoom y arrastra para mover la imagen.</span>
-                <button @click="closeModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-1.5 px-4 rounded-lg transition-all cursor-pointer">
-                    Cerrar
-                </button>
             </div>
         </div>
     </div>
 
+    <!-- Modal Alpine.js con Viewer.js Universal -->
+    @include('components.invoice.popup')
+    
 </div>
 
 @else
@@ -516,12 +426,6 @@
         <h3 class="text-base font-bold text-gray-800">Documento no encontrado</h3>
         <p class="text-xs text-gray-500">La factura que intentas buscar no existe o fue eliminada del sistema.</p>
     </div>
-    <!-- <div class="pt-2">
-        <a href="{{ route('dashboard') }}" class="inline-flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-sm">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            <span>Volver al Dashboard</span>
-        </a>
-    </div> -->
 </div>
 @endif
 
