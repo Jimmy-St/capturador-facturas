@@ -29,8 +29,10 @@ class CaptureController extends Controller
         ]);
 
         $file = $request->file('image');
+        $mimeType = $file->getMimeType() ?: 'image/jpeg';
+        $extension = $mimeType === 'image/webp' ? 'webp' : ($file->getClientOriginalExtension() ?: 'jpg');
         $uuid = (string) Str::uuid();
-        $fileName = $uuid.'.jpg';
+        $fileName = $uuid.'.'.$extension;
         $directory = 'demo_scans';
         $storedPath = $directory.'/'.$fileName;
 
@@ -42,10 +44,10 @@ class CaptureController extends Controller
         $sizeBytes = $file->getSize();
         $fileContent = $file->get();
 
-        // 2. Envío y análisis con la API de Gemini (mismo modelo configurado)
+        // 2. Envío y análisis con la API de Gemini
         $geminiStart = microtime(true);
         try {
-            $ocrResponse = $this->geminiService->analyzeInvoiceFromContent($fileContent, 'image/jpeg');
+            $ocrResponse = $this->geminiService->analyzeInvoiceFromContent($fileContent, $mimeType);
             $geminiTimeMs = round((microtime(true) - $geminiStart) * 1000, 1);
             $ocrSuccess = true;
             $ocrError = null;

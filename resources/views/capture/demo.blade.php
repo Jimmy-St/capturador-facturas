@@ -40,7 +40,7 @@
             <div>
                 <span class="font-extrabold text-sm tracking-wider text-white">TALOS LAB</span>
                 <span class="text-[10px] text-purple-400 font-semibold uppercase block leading-none">
-                    Test Binario &bull; Gemini OCR
+                    Test WebP &bull; Gemini OCR
                 </span>
             </div>
         </div>
@@ -180,7 +180,7 @@
                 <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
                     <span class="text-[8px] font-bold text-gray-400 block uppercase">1. Móvil</span>
                     <span class="text-xs font-black text-emerald-400 block mt-0.5" x-text="metrics.captureTimeMs + ' ms'"></span>
-                    <span class="text-[7px] text-gray-500 block">Render+JPG</span>
+                    <span class="text-[7px] text-gray-500 block">Render+WebP</span>
                 </div>
                 <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
                     <span class="text-[8px] font-bold text-gray-400 block uppercase">2. Red 4G</span>
@@ -488,7 +488,7 @@
                         0, 0, targetWidth, targetHeight
                     );
 
-                    // Generar Blob JPEG binario
+                    // Generar Blob WebP binario ultra liviano
                     croppedCanvas.toBlob(async (blob) => {
                         const captureEndTime = performance.now();
                         const captureTimeMs = Math.round(captureEndTime - captureStartTime);
@@ -504,7 +504,7 @@
                             URL.revokeObjectURL(this.capturedImageUrl);
                         }
                         this.capturedImageUrl = URL.createObjectURL(blob);
-                        this.capturedFileName = 'captura_' + Date.now() + '.jpg';
+                        this.capturedFileName = 'captura_' + Date.now() + '.webp';
 
                         // Guardar automáticamente copia física en el almacenamiento del móvil
                         const autoSaveLink = document.createElement('a');
@@ -514,13 +514,13 @@
                         autoSaveLink.click();
                         document.body.removeChild(autoSaveLink);
 
-                        // Etapa 2 y 3: Subida en binario y análisis en backend
-                        this.processingStageText = '2/3 Subiendo binario (4G) & ejecutando Gemini OCR...';
+                        // Etapa 2 y 3: Subida en binario WebP y análisis en backend
+                        this.processingStageText = '2/3 Subiendo WebP (4G) & ejecutando Gemini OCR...';
                         const requestStartTime = performance.now();
 
                         try {
                             const formData = new FormData();
-                            formData.append('image', blob, 'scan_mobile.jpg');
+                            formData.append('image', blob, 'scan_mobile.webp');
                             if (this.csrfToken) {
                                 formData.append('_token', this.csrfToken);
                             }
@@ -576,7 +576,7 @@
                             this.refreshIcons();
                         }
 
-                    }, 'image/jpeg', this.clientQuality);
+                    }, 'image/webp', this.clientQuality);
                 },
 
                 closeResultModal() {
