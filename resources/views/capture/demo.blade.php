@@ -23,7 +23,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col" 
+<body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col relative select-none" 
       x-data="demoScanner({
           maxDimension: 1280,
           clientQuality: 0.70,
@@ -31,8 +31,30 @@
           csrfToken: '{{ csrf_token() }}'
       })">
 
+    <!-- 1. DESTELLO BLANCO DE OBTURADOR (FLASH) -->
+    <div x-show="showFlash" 
+         x-transition:enter="transition-opacity ease-out duration-75"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition-opacity ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 bg-white pointer-events-none"
+         style="display: none;">
+    </div>
+
+    <!-- 2. ANIMACIÓN METÁFORA DE ARCHIVADO (FOTO SE REDUCE Y SE GUARDA ABAJO) -->
+    <div x-show="isArchiving" 
+         class="fixed inset-0 z-40 pointer-events-none flex items-center justify-center p-4 pt-16 pb-28"
+         style="display: none;">
+        <div class="w-full max-w-[360px] aspect-[216/330] max-h-[74vh] rounded-3xl overflow-hidden shadow-2xl border-2 border-white/80 transition-all duration-600 cubic-bezier(0.4, 0, 0.2, 1)"
+             :class="archivingPhase === 1 ? 'scale-100 opacity-100 translate-y-0' : 'scale-35 translate-y-[90vh] opacity-0 blur-xs'">
+            <img :src="archivePreviewUrl" class="w-full h-full object-cover">
+        </div>
+    </div>
+
     <!-- HEADER FLOTANTE TIPO APP -->
-    <header class="absolute top-0 inset-x-0 z-40 bg-gradient-to-b from-black/85 via-black/40 to-transparent p-4 flex items-center justify-between">
+    <header class="absolute top-0 inset-x-0 z-30 bg-gradient-to-b from-black/85 via-black/40 to-transparent p-4 flex items-center justify-between">
         <div class="flex items-center space-x-2.5">
             <div class="w-8 h-8 rounded-xl bg-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
                 <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
@@ -93,7 +115,8 @@
         <!-- LÍNEAS GUÍA FORMATO OFICIO -->
         <div class="relative w-full h-full flex items-center justify-center p-4 pt-16 pb-28 pointer-events-none z-10">
             <div x-ref="guideBox"
-                 class="w-full max-w-[360px] aspect-[216/330] max-h-[74vh] border-2 border-dashed border-purple-400/70 rounded-3xl flex flex-col justify-between p-5 shadow-2xl relative backdrop-contrast-105">
+                 class="w-full max-w-[360px] aspect-[216/330] max-h-[74vh] border-2 border-dashed border-purple-400/70 rounded-3xl flex flex-col justify-between p-5 shadow-2xl relative backdrop-contrast-105"
+                 :class="{ 'border-emerald-400/80': isProcessing }">
                 
                 <!-- Esquinas Superiores -->
                 <div class="flex justify-between">
@@ -116,20 +139,41 @@
                 </div>
             </div>
         </div>
+
+        <!-- 3. SPINNER SOBRIO MINIMALISTA EN EL CENTRO DURANTE EL PROCESAMIENTO -->
+        <div x-show="isProcessing && !isArchiving"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             class="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none p-6"
+             style="display: none;">
+            <div class="bg-slate-950/85 border border-purple-500/30 backdrop-blur-xl p-5 rounded-3xl flex flex-col items-center space-y-3 shadow-2xl max-w-xs text-center">
+                <!-- Dual Ring Minimalist Spinner -->
+                <div class="relative w-12 h-12 flex items-center justify-center">
+                    <div class="w-12 h-12 border-2 border-purple-500/20 border-t-purple-400 rounded-full animate-spin"></div>
+                    <div class="w-8 h-8 border-2 border-indigo-400/20 border-b-indigo-400 rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                    <i data-lucide="sparkles" class="w-4 h-4 text-purple-300 absolute"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-white tracking-wide block" x-text="processingStageText"></span>
+                    <span class="text-[10px] text-purple-300/80 font-mono block mt-1" x-text="'Procesando (' + Math.round(progressPercent) + '%)'"></span>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <!-- BARRA INFERIOR CON DISPARADOR Y ESTADOS DINÁMICOS -->
-    <footer class="absolute bottom-0 inset-x-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-5 flex flex-col items-center">
-        
-        <!-- Estado de progreso dinámico -->
-        <div x-show="isProcessing" 
-             x-transition 
-             class="mb-3 w-full max-w-sm p-3.5 bg-slate-900/90 border border-purple-500/40 rounded-2xl text-purple-200 text-xs flex items-center space-x-3 backdrop-blur-md shadow-2xl"
-             style="display: none;">
-            <div class="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
-            <span x-text="processingStageText" class="font-medium tracking-wide"></span>
-        </div>
+    <!-- 4. BARRA DE AVANCE CONTINUA A TODO EL ANCHO (BASE DE LA PANTALLA) -->
+    <div x-show="isProcessing" 
+         x-transition 
+         class="fixed bottom-0 inset-x-0 z-50 h-1.5 bg-slate-950/90 backdrop-blur-sm overflow-hidden border-t border-purple-500/20 pointer-events-none"
+         style="display: none;">
+        <div class="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-emerald-400 transition-all duration-150 ease-out shadow-[0_0_12px_rgba(168,85,247,0.8)]"
+             :style="'width: ' + progressPercent + '%'"></div>
+    </div>
 
+    <!-- BARRA INFERIOR CON DISPARADOR -->
+    <footer class="absolute bottom-0 inset-x-0 z-30 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-5 flex flex-col items-center">
+        
         <!-- Error si ocurre algo -->
         <div x-show="errorMessage" 
              x-transition
@@ -145,13 +189,13 @@
                     :disabled="!isCameraReady || isProcessing"
                     type="button"
                     class="w-full py-4 px-6 bg-gradient-to-r from-purple-600 via-indigo-600 to-sky-600 hover:from-purple-500 hover:to-sky-500 active:scale-95 text-white font-extrabold rounded-2xl shadow-xl shadow-purple-500/25 flex items-center justify-center space-x-3 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i>
+                <i data-lucide="camera" class="w-5 h-5 text-amber-300"></i>
                 <span class="tracking-wider text-xs sm:text-sm">CAPTURAR, SUBIR & GEMINI OCR</span>
             </button>
         </div>
     </footer>
 
-    <!-- MODAL DE RESULTADOS Y TELEMETRÍA COMPLETA -->
+    <!-- MODAL DE RESULTADOS Y TELEMETRÍA COMPLETA (ENTREGA INMEDIATA) -->
     <div x-show="showResultModal" 
          x-transition.opacity
          class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 overflow-y-auto"
@@ -207,7 +251,7 @@
                     <span class="text-[8px] text-purple-300/70 block">Extremo a extremo</span>
                 </div>
                 <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Peso Imagen</span>
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Peso WebP</span>
                     <span class="text-sm font-black text-amber-400" x-text="metrics.fileSizeKb + ' KB'"></span>
                     <span class="text-[8px] text-gray-500 block" x-text="metrics.dimensions"></span>
                 </div>
@@ -306,12 +350,12 @@
         </div>
     </div>
 
-    <!-- SCRIPT ALPINE.JS CON MEDIDAS DE CAPTURA, RED Y GEMINI -->
+    <!-- SCRIPT ALPINE.JS CON COREOGRAFÍA SENSORIAL Y AVANCE DINÁMICO -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('demoScanner', (config = {}) => ({
                 maxDimension: config.maxDimension || 1280,
-                clientQuality: config.clientQuality || 0.72,
+                clientQuality: config.clientQuality || 0.70,
                 uploadUrl: config.uploadUrl || '/scan-demo/upload',
                 csrfToken: config.csrfToken || '',
                 
@@ -319,12 +363,22 @@
                 isCameraReady: false,
                 cameraError: false,
                 isProcessing: false,
-                processingStageText: '',
                 errorMessage: '',
                 hasTorch: false,
                 torchOn: false,
 
-                // Telemetría
+                // Acto 1: Efectos Sensoriales
+                showFlash: false,
+                isArchiving: false,
+                archivingPhase: 1,
+                archivePreviewUrl: '',
+
+                // Acto 2: Barra de Avance y Etapas
+                progressPercent: 0,
+                processingStageText: 'Iniciando captura...',
+                progressInterval: null,
+
+                // Telemetría y Modal
                 showResultModal: false,
                 capturedImageUrl: '',
                 capturedFileName: '',
@@ -356,6 +410,73 @@
                             lucide.createIcons();
                         }
                     });
+                },
+
+                playShutterSound() {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioContext) return;
+                        const ctx = new AudioContext();
+                        if (ctx.state === 'suspended') ctx.resume();
+
+                        // Clic mecánico 1
+                        const osc1 = ctx.createOscillator();
+                        const gain1 = ctx.createGain();
+                        osc1.type = 'triangle';
+                        osc1.frequency.setValueAtTime(850, ctx.currentTime);
+                        osc1.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.045);
+                        gain1.gain.setValueAtTime(0.28, ctx.currentTime);
+                        gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.045);
+                        osc1.connect(gain1);
+                        gain1.connect(ctx.destination);
+                        osc1.start();
+                        osc1.stop(ctx.currentTime + 0.045);
+
+                        // Clic mecánico 2 (obturador)
+                        setTimeout(() => {
+                            if (ctx.state === 'closed') return;
+                            const osc2 = ctx.createOscillator();
+                            const gain2 = ctx.createGain();
+                            osc2.type = 'sine';
+                            osc2.frequency.setValueAtTime(500, ctx.currentTime);
+                            osc2.frequency.exponentialRampToValueAtTime(70, ctx.currentTime + 0.05);
+                            gain2.gain.setValueAtTime(0.2, ctx.currentTime);
+                            gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+                            osc2.connect(gain2);
+                            gain2.connect(ctx.destination);
+                            osc2.start();
+                            osc2.stop(ctx.currentTime + 0.05);
+                        }, 40);
+                    } catch (e) {}
+                },
+
+                playSuccessSound() {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioContext) return;
+                        const ctx = new AudioContext();
+                        if (ctx.state === 'suspended') ctx.resume();
+
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+                        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.22);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.22);
+                    } catch(e) {}
+                },
+
+                triggerHaptic(pattern = 35) {
+                    if (navigator.vibrate) {
+                        try {
+                            navigator.vibrate(pattern);
+                        } catch (e) {}
+                    }
                 },
 
                 async startCamera() {
@@ -416,6 +537,45 @@
                     }
                 },
 
+                startProgressSimulation(requestStartTime) {
+                    this.progressPercent = 5;
+                    this.processingStageText = 'Subiendo documento...';
+
+                    if (this.progressInterval) {
+                        clearInterval(this.progressInterval);
+                    }
+
+                    this.progressInterval = setInterval(() => {
+                        const elapsed = performance.now() - requestStartTime;
+
+                        // Curva suave de 5 segundos hacia 90%
+                        if (elapsed < 5000) {
+                            this.progressPercent = Math.min(90, 5 + (elapsed / 5000) * 85);
+                        } else {
+                            // Si tarda más de 5s, avanza muy suavemente hacia 96%
+                            this.progressPercent = Math.min(96, 90 + ((elapsed - 5000) / 4000) * 6);
+                        }
+
+                        // Textos rotativos sobrios
+                        if (elapsed < 1200) {
+                            this.processingStageText = 'Subiendo documento...';
+                        } else if (elapsed < 2800) {
+                            this.processingStageText = 'Lectura OCR en curso...';
+                        } else if (elapsed < 4500) {
+                            this.processingStageText = 'Extrayendo datos de la factura...';
+                        } else {
+                            this.processingStageText = 'Verificando consistencia con IA...';
+                        }
+                    }, 50);
+                },
+
+                stopProgressSimulation() {
+                    if (this.progressInterval) {
+                        clearInterval(this.progressInterval);
+                        this.progressInterval = null;
+                    }
+                },
+
                 captureAndProcessWithGemini() {
                     if (!this.isCameraReady || this.isProcessing) return;
 
@@ -430,9 +590,19 @@
                         return;
                     }
 
+                    // Iniciar proceso
                     this.isProcessing = true;
                     this.errorMessage = '';
-                    this.processingStageText = '1/3 Recortando y procesando en el móvil...';
+
+                    // ACTO 1: FEEDBACK SENSORIAL INMEDIATO (0 ms)
+                    this.playShutterSound();
+                    this.triggerHaptic(35);
+
+                    // Destello de obturador (Flash)
+                    this.showFlash = true;
+                    setTimeout(() => {
+                        this.showFlash = false;
+                    }, 110);
 
                     // Etapa 1: Captura local en Canvas
                     const captureStartTime = performance.now();
@@ -488,13 +658,31 @@
                         0, 0, targetWidth, targetHeight
                     );
 
-                    // Generar Blob WebP binario ultra liviano
+                    // Animación de archivado hacia abajo
+                    const snapshotDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.5);
+                    this.archivePreviewUrl = snapshotDataUrl;
+                    this.isArchiving = true;
+                    this.archivingPhase = 1;
+
+                    // Iniciar deslizamiento hacia abajo a los 120 ms
+                    setTimeout(() => {
+                        this.archivingPhase = 2;
+                    }, 120);
+
+                    // Terminar animación de archivado a los 750 ms
+                    setTimeout(() => {
+                        this.isArchiving = false;
+                        this.refreshIcons();
+                    }, 750);
+
+                    // Generar Blob WebP binario ultra liviano (calidad 70)
                     croppedCanvas.toBlob(async (blob) => {
                         const captureEndTime = performance.now();
                         const captureTimeMs = Math.round(captureEndTime - captureStartTime);
 
                         if (!blob) {
                             this.isProcessing = false;
+                            this.isArchiving = false;
                             this.errorMessage = 'Error al generar la imagen del encuadre.';
                             return;
                         }
@@ -514,9 +702,9 @@
                         autoSaveLink.click();
                         document.body.removeChild(autoSaveLink);
 
-                        // Etapa 2 y 3: Subida en binario WebP y análisis en backend
-                        this.processingStageText = '2/3 Subiendo WebP (4G) & ejecutando Gemini OCR...';
+                        // ACTO 2: INICIAR BARRA DE AVANCE CONTINUA DE 5 SEGUNDOS
                         const requestStartTime = performance.now();
+                        this.startProgressSimulation(requestStartTime);
 
                         try {
                             const formData = new FormData();
@@ -543,6 +731,15 @@
                                 throw new Error(result.message || 'Error en el servidor al procesar la imagen.');
                             }
 
+                            // ACTO 3: ENTREGA INMEDIATA AL COMPLETAR
+                            this.stopProgressSimulation();
+                            this.progressPercent = 100;
+                            this.processingStageText = '¡Documento analizado con éxito!';
+
+                            // Sonido y vibración de confirmación
+                            this.playSuccessSound();
+                            this.triggerHaptic([25, 40, 25]);
+
                             // Desglose de red restando el tiempo interno del servidor
                             const serverTotalMs = result.server_total_time_ms || (result.server_disk_time_ms + result.gemini_time_ms);
                             const uploadNetTimeMs = Math.max(10, Math.round(totalRequestMs - serverTotalMs));
@@ -565,12 +762,17 @@
                                 ocrData: result.ocr_data
                             };
 
-                            this.isProcessing = false;
-                            this.showResultModal = true;
-                            this.refreshIcons();
+                            // Breve retraso visual de 150 ms para que el ojo registre la barra al 100% y abrir modal
+                            setTimeout(() => {
+                                this.isProcessing = false;
+                                this.showResultModal = true;
+                                this.refreshIcons();
+                            }, 150);
 
                         } catch (err) {
+                            this.stopProgressSimulation();
                             this.isProcessing = false;
+                            this.isArchiving = false;
                             this.errorMessage = 'Fallo en el procesamiento: ' + err.message;
                             console.error('Error en captura/OCR:', err);
                             this.refreshIcons();
