@@ -26,7 +26,7 @@
 <body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col" 
       x-data="demoScanner({
           maxDimension: 1280,
-          clientQuality: 0.72,
+          clientQuality: 0.70,
           uploadUrl: '{{ route('capture.demo.upload') }}',
           csrfToken: '{{ csrf_token() }}'
       })">
