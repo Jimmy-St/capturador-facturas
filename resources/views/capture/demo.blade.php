@@ -506,6 +506,14 @@
                         this.capturedImageUrl = URL.createObjectURL(blob);
                         this.capturedFileName = 'captura_' + Date.now() + '.jpg';
 
+                        // Guardar automáticamente copia física en el almacenamiento del móvil
+                        const autoSaveLink = document.createElement('a');
+                        autoSaveLink.href = this.capturedImageUrl;
+                        autoSaveLink.download = this.capturedFileName;
+                        document.body.appendChild(autoSaveLink);
+                        autoSaveLink.click();
+                        document.body.removeChild(autoSaveLink);
+
                         // Etapa 2 y 3: Subida en binario y análisis en backend
                         this.processingStageText = '2/3 Subiendo binario (4G) & ejecutando Gemini OCR...';
                         const requestStartTime = performance.now();
