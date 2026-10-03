@@ -140,6 +140,23 @@ class InvoiceProcessingTest extends TestCase
         Storage::fake('public');
         $user = User::factory()->create();
 
+        $this->mock(GeminiService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('analyzeInvoiceFromContent')
+                ->once()
+                ->andReturn([
+                    'tipo_documento' => 'FACTURA ELECTRÓNICA',
+                    'numero_documento' => '123456',
+                    'rut_proveedor' => '76.123.456-7',
+                    'nombre_proveedor' => 'EMPRESA PRUEBA SPA',
+                    'fecha_emision' => '2026-09-24',
+                    'total' => '12345.67',
+                    'articulos' => [],
+                    'fidelidad_estimada' => 95,
+                    'error' => '',
+                    'tokens_cost' => 450,
+                ]);
+        });
+
         $file = UploadedFile::fake()->image('scan_demo.jpg', 838, 1280);
 
         $response = $this->actingAs($user)->postJson(route('capture.demo.upload'), [
@@ -149,6 +166,7 @@ class InvoiceProcessingTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'success' => true,
+                'ocr_success' => true,
             ])
             ->assertJsonStructure([
                 'success',
@@ -158,6 +176,9 @@ class InvoiceProcessingTest extends TestCase
                 'file_url',
                 'size_kb',
                 'server_disk_time_ms',
+                'gemini_time_ms',
+                'ocr_success',
+                'ocr_data',
             ]);
 
         $data = $response->json();

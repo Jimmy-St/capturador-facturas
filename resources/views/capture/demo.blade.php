@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Laboratorio de Captura & Subida Binaria - {{ config('app.name') }}</title>
+    <title>Laboratorio de Captura & Gemini OCR - {{ config('app.name') }}</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,13 +34,13 @@
     <!-- HEADER FLOTANTE TIPO APP -->
     <header class="absolute top-0 inset-x-0 z-40 bg-gradient-to-b from-black/85 via-black/40 to-transparent p-4 flex items-center justify-between">
         <div class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <i data-lucide="flask-conical" class="w-5 h-5 text-white"></i>
+            <div class="w-8 h-8 rounded-xl bg-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
             </div>
             <div>
                 <span class="font-extrabold text-sm tracking-wider text-white">TALOS LAB</span>
-                <span class="text-[10px] text-emerald-400 font-semibold uppercase block leading-none">
-                    Test Binario &bull; Subida UUID
+                <span class="text-[10px] text-purple-400 font-semibold uppercase block leading-none">
+                    Test Binario &bull; Gemini OCR
                 </span>
             </div>
         </div>
@@ -86,47 +86,47 @@
         <!-- Spinner mientras la cámara inicializa -->
         <div x-show="!isCameraReady && !cameraError" 
              class="absolute inset-0 z-20 flex flex-col items-center justify-center space-y-3 bg-black/80 backdrop-blur-xs">
-            <div class="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            <div class="w-10 h-10 border-3 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
             <p class="text-xs text-gray-300 font-medium">Iniciando cámara en 1080p Full HD...</p>
         </div>
 
         <!-- LÍNEAS GUÍA FORMATO OFICIO -->
         <div class="relative w-full h-full flex items-center justify-center p-4 pt-16 pb-28 pointer-events-none z-10">
             <div x-ref="guideBox"
-                 class="w-full max-w-[360px] aspect-[216/330] max-h-[74vh] border-2 border-dashed border-emerald-400/70 rounded-3xl flex flex-col justify-between p-5 shadow-2xl relative backdrop-contrast-105">
+                 class="w-full max-w-[360px] aspect-[216/330] max-h-[74vh] border-2 border-dashed border-purple-400/70 rounded-3xl flex flex-col justify-between p-5 shadow-2xl relative backdrop-contrast-105">
                 
-                <!-- Esquinas Superiores Esmeralda -->
+                <!-- Esquinas Superiores -->
                 <div class="flex justify-between">
-                    <span class="w-7 h-7 border-t-4 border-l-4 border-emerald-400 rounded-tl-xl shadow-sm"></span>
-                    <span class="w-7 h-7 border-t-4 border-r-4 border-emerald-400 rounded-tr-xl shadow-sm"></span>
+                    <span class="w-7 h-7 border-t-4 border-l-4 border-purple-400 rounded-tl-xl shadow-sm"></span>
+                    <span class="w-7 h-7 border-t-4 border-r-4 border-purple-400 rounded-tr-xl shadow-sm"></span>
                 </div>
 
                 <!-- Insignia Central -->
                 <div class="text-center">
-                    <span class="bg-black/70 backdrop-blur-md text-emerald-300 border border-emerald-400/40 text-[10px] font-bold tracking-widest px-3.5 py-1.5 rounded-full uppercase shadow-lg inline-flex items-center space-x-1.5">
-                        <i data-lucide="zap" class="w-3 h-3 text-emerald-400"></i>
-                        <span>Encuadre Oficio (1080p)</span>
+                    <span class="bg-black/70 backdrop-blur-md text-purple-300 border border-purple-400/40 text-[10px] font-bold tracking-widest px-3.5 py-1.5 rounded-full uppercase shadow-lg inline-flex items-center space-x-1.5">
+                        <i data-lucide="sparkles" class="w-3 h-3 text-purple-400"></i>
+                        <span>Encuadre Oficio + IA</span>
                     </span>
                 </div>
 
-                <!-- Esquinas Inferiores Esmeralda -->
+                <!-- Esquinas Inferiores -->
                 <div class="flex justify-between">
-                    <span class="w-7 h-7 border-b-4 border-l-4 border-emerald-400 rounded-bl-xl shadow-sm"></span>
-                    <span class="w-7 h-7 border-b-4 border-r-4 border-emerald-400 rounded-br-xl shadow-sm"></span>
+                    <span class="w-7 h-7 border-b-4 border-l-4 border-purple-400 rounded-bl-xl shadow-sm"></span>
+                    <span class="w-7 h-7 border-b-4 border-r-4 border-purple-400 rounded-br-xl shadow-sm"></span>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- BARRA INFERIOR CON DISPARADOR Y TELEMETRÍA DE ESTADO -->
+    <!-- BARRA INFERIOR CON DISPARADOR Y ESTADOS DINÁMICOS -->
     <footer class="absolute bottom-0 inset-x-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-5 flex flex-col items-center">
         
         <!-- Estado de progreso dinámico -->
         <div x-show="isProcessing" 
              x-transition 
-             class="mb-3 w-full max-w-sm p-3 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl text-emerald-200 text-xs flex items-center space-x-3 backdrop-blur-md shadow-xl"
+             class="mb-3 w-full max-w-sm p-3.5 bg-slate-900/90 border border-purple-500/40 rounded-2xl text-purple-200 text-xs flex items-center space-x-3 backdrop-blur-md shadow-2xl"
              style="display: none;">
-            <div class="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+            <div class="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
             <span x-text="processingStageText" class="font-medium tracking-wide"></span>
         </div>
 
@@ -140,13 +140,13 @@
         </div>
 
         <div class="w-full max-w-sm flex items-center justify-center">
-            <!-- Botón Principal de Captura y Subida -->
-            <button @click="captureAndUpload()" 
+            <!-- Botón Principal de Captura y Subida con Gemini -->
+            <button @click="captureAndProcessWithGemini()" 
                     :disabled="!isCameraReady || isProcessing"
                     type="button"
-                    class="w-full py-4 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 active:scale-95 text-white font-extrabold rounded-2xl shadow-xl shadow-emerald-500/25 flex items-center justify-center space-x-3 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                <i data-lucide="cloud-upload" class="w-5 h-5"></i>
-                <span class="tracking-wider text-xs sm:text-sm">CAPTURAR Y SUBIR EN BINARIO</span>
+                    class="w-full py-4 px-6 bg-gradient-to-r from-purple-600 via-indigo-600 to-sky-600 hover:from-purple-500 hover:to-sky-500 active:scale-95 text-white font-extrabold rounded-2xl shadow-xl shadow-purple-500/25 flex items-center justify-center space-x-3 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i>
+                <span class="tracking-wider text-xs sm:text-sm">CAPTURAR, SUBIR & GEMINI OCR</span>
             </button>
         </div>
     </footer>
@@ -154,7 +154,7 @@
     <!-- MODAL DE RESULTADOS Y TELEMETRÍA COMPLETA -->
     <div x-show="showResultModal" 
          x-transition.opacity
-         class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+         class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 overflow-y-auto"
          style="display: none;">
         
         <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-5 flex flex-col space-y-4 shadow-2xl my-auto">
@@ -162,12 +162,12 @@
             <!-- Cabecera de Telemetría -->
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    <div class="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-sm text-white">Captura y Subida Exitosa</h3>
-                        <p class="text-[10px] text-emerald-400 font-medium">Almacenada en servidor con UUID (Binario)</p>
+                        <h3 class="font-bold text-sm text-white">Captura, Subida & Gemini OCR</h3>
+                        <p class="text-[10px] text-purple-400 font-medium">Telemetría completa de tiempos</p>
                     </div>
                 </div>
                 <button @click="closeResultModal()" class="text-gray-400 hover:text-white p-1 rounded-md cursor-pointer">
@@ -175,61 +175,105 @@
                 </button>
             </div>
 
-            <!-- Fila 1 de Métricas: Desglose de Tiempos -->
-            <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                    <span class="text-[9px] font-bold text-gray-400 block uppercase">1. Captura Móvil</span>
-                    <span class="text-sm font-black text-emerald-400" x-text="metrics.captureTimeMs + ' ms'"></span>
-                    <span class="text-[8px] text-gray-500 block">Render + JPEG</span>
+            <!-- Fila 1 de Métricas: Desglose por Etapas -->
+            <div class="grid grid-cols-4 gap-1.5 text-center">
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
+                    <span class="text-[8px] font-bold text-gray-400 block uppercase">1. Móvil</span>
+                    <span class="text-xs font-black text-emerald-400 block mt-0.5" x-text="metrics.captureTimeMs + ' ms'"></span>
+                    <span class="text-[7px] text-gray-500 block">Render+JPG</span>
                 </div>
-                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                    <span class="text-[9px] font-bold text-gray-400 block uppercase">2. Envío Red</span>
-                    <span class="text-sm font-black text-sky-400" x-text="metrics.uploadTimeMs + ' ms'"></span>
-                    <span class="text-[8px] text-gray-500 block">HTTP Multipart</span>
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
+                    <span class="text-[8px] font-bold text-gray-400 block uppercase">2. Red 4G</span>
+                    <span class="text-xs font-black text-sky-400 block mt-0.5" x-text="metrics.uploadNetTimeMs + ' ms'"></span>
+                    <span class="text-[7px] text-gray-500 block">HTTP Subida</span>
                 </div>
-                <div class="bg-slate-950 p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/10">
-                    <span class="text-[9px] font-bold text-emerald-400 block uppercase">Tiempo Total</span>
-                    <span class="text-sm font-black text-white" x-text="metrics.totalTimeMs + ' ms'"></span>
-                    <span class="text-[8px] text-emerald-400/70 block">Móvil + Red</span>
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
+                    <span class="text-[8px] font-bold text-gray-400 block uppercase">3. Disco</span>
+                    <span class="text-xs font-black text-teal-400 block mt-0.5" x-text="metrics.serverDiskTimeMs + ' ms'"></span>
+                    <span class="text-[7px] text-gray-500 block">SSD Servidor</span>
+                </div>
+                <div class="bg-slate-950 p-2 rounded-xl border border-purple-500/40 bg-purple-950/20">
+                    <span class="text-[8px] font-bold text-purple-300 block uppercase">4. Gemini IA</span>
+                    <span class="text-xs font-black text-purple-400 block mt-0.5" x-text="metrics.geminiTimeMs + ' ms'"></span>
+                    <span class="text-[7px] text-purple-400/70 block">OCR API</span>
                 </div>
             </div>
 
-            <!-- Fila 2 de Métricas: Carga y Almacenamiento -->
+            <!-- Fila 2: Resumen Global y Peso -->
             <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Servidor (SSD)</span>
-                    <span class="text-sm font-black text-teal-400" x-text="metrics.serverDiskTimeMs + ' ms'"></span>
-                    <span class="text-[8px] text-gray-500 block">Escritura física</span>
+                <div class="bg-gradient-to-br from-slate-950 to-purple-950/30 p-2.5 rounded-xl border border-purple-500/30">
+                    <span class="text-[9px] font-bold text-purple-300 block uppercase">Tiempo Total E2E</span>
+                    <span class="text-sm font-black text-white" x-text="metrics.totalTimeMs + ' ms'"></span>
+                    <span class="text-[8px] text-purple-300/70 block">Extremo a extremo</span>
                 </div>
                 <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Peso JPG</span>
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Peso Imagen</span>
                     <span class="text-sm font-black text-amber-400" x-text="metrics.fileSizeKb + ' KB'"></span>
-                    <span class="text-[8px] text-gray-500 block">Binario directo</span>
+                    <span class="text-[8px] text-gray-500 block" x-text="metrics.dimensions"></span>
                 </div>
                 <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Dimensiones</span>
-                    <span class="text-[11px] font-black text-purple-400 block mt-0.5" x-text="metrics.dimensions"></span>
-                    <span class="text-[8px] text-gray-500 block">Encuadre exacto</span>
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Tokens IA</span>
+                    <span class="text-sm font-black text-pink-400" x-text="metrics.tokensCost"></span>
+                    <span class="text-[8px] text-gray-500 block">Consumo Google</span>
                 </div>
+            </div>
+
+            <!-- RESULTADOS DEL OCR EXTRAÍDOS POR GEMINI -->
+            <div x-show="metrics.ocrSuccess && metrics.ocrData" class="bg-slate-950 border border-slate-800 rounded-2xl p-3 space-y-2">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+                    <span class="text-[10px] font-bold text-purple-300 uppercase tracking-wider flex items-center space-x-1">
+                        <i data-lucide="file-check" class="w-3.5 h-3.5 text-purple-400 inline"></i>
+                        <span>Datos Extraídos por Gemini</span>
+                    </span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                          :class="metrics.ocrData?.fidelidad_estimada >= 80 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'"
+                          x-text="'Fidelidad: ' + (metrics.ocrData?.fidelidad_estimada || 0) + '%'">
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <span class="text-[9px] text-gray-500 uppercase block font-semibold">Proveedor</span>
+                        <span class="font-bold text-white truncate block text-[11px]" x-text="metrics.ocrData?.nombre_proveedor || 'No identificado'"></span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-gray-500 uppercase block font-semibold">RUT Proveedor</span>
+                        <span class="font-mono text-gray-300 block text-[11px]" x-text="metrics.ocrData?.rut_proveedor || 'N/A'"></span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-gray-500 uppercase block font-semibold">Folio / Doc</span>
+                        <span class="font-mono text-amber-400 font-bold block text-[11px]" x-text="(metrics.ocrData?.tipo_documento || 'DOC') + ' #' + (metrics.ocrData?.numero_documento || 'S/N')"></span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-gray-500 uppercase block font-semibold">Total</span>
+                        <span class="font-extrabold text-emerald-400 block text-[11px]" x-text="metrics.ocrData?.total || '$0'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error de OCR si falla -->
+            <div x-show="!metrics.ocrSuccess && metrics.ocrError" class="p-3 bg-rose-500/20 border border-rose-500/40 rounded-xl text-rose-300 text-xs">
+                <span class="font-bold block">Aviso de OCR:</span>
+                <span x-text="metrics.ocrError"></span>
             </div>
 
             <!-- Identificador UUID en Servidor -->
-            <div class="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl space-y-1">
-                <div class="flex items-center justify-between text-[10px]">
-                    <span class="text-gray-400 font-semibold uppercase tracking-wider">UUID en Servidor:</span>
-                    <span class="text-emerald-400 font-mono font-bold" x-text="metrics.uuid"></span>
+            <div class="bg-slate-950/80 border border-slate-800 p-2 rounded-xl space-y-0.5 text-[9px]">
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400 font-semibold uppercase">UUID:</span>
+                    <span class="text-purple-400 font-mono font-bold truncate max-w-[230px]" x-text="metrics.uuid"></span>
                 </div>
-                <div class="flex items-center justify-between text-[10px]">
-                    <span class="text-gray-400 font-semibold uppercase tracking-wider">Ubicación:</span>
-                    <span class="text-gray-300 font-mono text-[9px] truncate max-w-[200px]" x-text="metrics.filePath"></span>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400 font-semibold uppercase">Ruta:</span>
+                    <span class="text-gray-300 font-mono truncate max-w-[230px]" x-text="metrics.filePath"></span>
                 </div>
             </div>
 
-            <!-- Previsualización de la Foto Resultante -->
-            <div class="bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center max-h-[30vh] relative group">
-                <img :src="capturedImageUrl" alt="Captura demo" class="max-h-[30vh] w-auto object-contain">
-                <div class="absolute bottom-2 inset-x-2 bg-black/60 backdrop-blur-xs text-[10px] text-center text-gray-300 py-1 rounded-lg">
-                    Foto recortada enviada en binario al servidor
+            <!-- Previsualización de la Foto -->
+            <div class="bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center max-h-[20vh] relative group">
+                <img :src="capturedImageUrl" alt="Captura demo" class="max-h-[20vh] w-auto object-contain">
+                <div class="absolute bottom-1 inset-x-1 bg-black/60 backdrop-blur-xs text-[9px] text-center text-gray-300 py-0.5 rounded-lg">
+                    Foto enviada a Gemini OCR
                 </div>
             </div>
 
@@ -237,7 +281,7 @@
             <div class="space-y-2 pt-1">
                 <button @click="closeResultModal()" 
                         type="button"
-                        class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-600/20 cursor-pointer">
+                        class="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-purple-600/20 cursor-pointer">
                     <i data-lucide="camera" class="w-4 h-4"></i>
                     <span>Disparar otra captura</span>
                 </button>
@@ -262,7 +306,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT ALPINE.JS CON TELEMETRÍA DE SUBIDA -->
+    <!-- SCRIPT ALPINE.JS CON MEDIDAS DE CAPTURA, RED Y GEMINI -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('demoScanner', (config = {}) => ({
@@ -286,14 +330,19 @@
                 capturedFileName: '',
                 metrics: {
                     captureTimeMs: 0,
-                    uploadTimeMs: 0,
-                    totalTimeMs: 0,
+                    uploadNetTimeMs: 0,
                     serverDiskTimeMs: 0,
+                    geminiTimeMs: 0,
+                    totalTimeMs: 0,
                     fileSizeKb: 0,
                     dimensions: '',
+                    tokensCost: 0,
                     uuid: '',
                     filePath: '',
-                    fileUrl: ''
+                    fileUrl: '',
+                    ocrSuccess: false,
+                    ocrError: null,
+                    ocrData: null
                 },
 
                 init() {
@@ -367,7 +416,7 @@
                     }
                 },
 
-                captureAndUpload() {
+                captureAndProcessWithGemini() {
                     if (!this.isCameraReady || this.isProcessing) return;
 
                     const video = this.$refs.video;
@@ -383,9 +432,9 @@
 
                     this.isProcessing = true;
                     this.errorMessage = '';
-                    this.processingStageText = '1/2 Recortando y procesando imagen en el móvil...';
+                    this.processingStageText = '1/3 Recortando y procesando en el móvil...';
 
-                    // Paso 1: Captura y recorte local (medición de tiempo)
+                    // Etapa 1: Captura local en Canvas
                     const captureStartTime = performance.now();
 
                     const videoRect = video.getBoundingClientRect();
@@ -457,9 +506,9 @@
                         this.capturedImageUrl = URL.createObjectURL(blob);
                         this.capturedFileName = 'captura_' + Date.now() + '.jpg';
 
-                        // Paso 2: Envío binario (POST multipart) al servidor
-                        this.processingStageText = '2/2 Subiendo binario al servidor (HTTP POST)...';
-                        const uploadStartTime = performance.now();
+                        // Etapa 2 y 3: Subida en binario y análisis en backend
+                        this.processingStageText = '2/3 Subiendo binario (4G) & ejecutando Gemini OCR...';
+                        const requestStartTime = performance.now();
 
                         try {
                             const formData = new FormData();
@@ -477,26 +526,35 @@
                                 body: formData
                             });
 
-                            const uploadEndTime = performance.now();
-                            const uploadTimeMs = Math.round(uploadEndTime - uploadStartTime);
+                            const requestEndTime = performance.now();
+                            const totalRequestMs = Math.round(requestEndTime - requestStartTime);
 
                             const result = await response.json();
 
                             if (!response.ok || !result.success) {
-                                throw new Error(result.message || 'Error en el servidor al almacenar la imagen.');
+                                throw new Error(result.message || 'Error en el servidor al procesar la imagen.');
                             }
+
+                            // Desglose de red restando el tiempo interno del servidor
+                            const serverTotalMs = result.server_total_time_ms || (result.server_disk_time_ms + result.gemini_time_ms);
+                            const uploadNetTimeMs = Math.max(10, Math.round(totalRequestMs - serverTotalMs));
 
                             // Registrar métricas completas
                             this.metrics = {
                                 captureTimeMs: captureTimeMs,
-                                uploadTimeMs: uploadTimeMs,
-                                totalTimeMs: captureTimeMs + uploadTimeMs,
+                                uploadNetTimeMs: uploadNetTimeMs,
                                 serverDiskTimeMs: result.server_disk_time_ms || 0,
+                                geminiTimeMs: result.gemini_time_ms || 0,
+                                totalTimeMs: captureTimeMs + totalRequestMs,
                                 fileSizeKb: (blob.size / 1024).toFixed(1),
                                 dimensions: targetWidth + ' x ' + targetHeight,
+                                tokensCost: result.ocr_data?.tokens_cost || 0,
                                 uuid: result.uuid || '',
                                 filePath: result.file_path || '',
-                                fileUrl: result.file_url || ''
+                                fileUrl: result.file_url || '',
+                                ocrSuccess: result.ocr_success,
+                                ocrError: result.ocr_error,
+                                ocrData: result.ocr_data
                             };
 
                             this.isProcessing = false;
@@ -505,8 +563,8 @@
 
                         } catch (err) {
                             this.isProcessing = false;
-                            this.errorMessage = 'Fallo en la subida: ' + err.message;
-                            console.error('Error al subir imagen binaria:', err);
+                            this.errorMessage = 'Fallo en el procesamiento: ' + err.message;
+                            console.error('Error en captura/OCR:', err);
                             this.refreshIcons();
                         }
 
