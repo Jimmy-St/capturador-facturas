@@ -63,7 +63,7 @@
             <!-- Tarjeta: Factura Original (Captura Inicial OCR) -->
             @include('components.invoice.image')
             
-            <!-- RECUADRO UNIFICADO: ESTADO + REGISTRAR PAGO + HISTORIAL -->
+            <!-- PAGOS: ESTADO + REGISTRAR + HISTORIAL -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-5">
                 @include('components.invoice.payment-status')
                 @include('components.invoice.payment-form')
@@ -78,7 +78,7 @@
 </div>
 
 @else
-<!-- ESTADO: FACTURA NO ENCONTRADA -->
+<!-- FACTURA NO ENCONTRADA -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-10 text-center max-w-xl mx-auto space-y-4 my-10">
     <div class="w-20 h-20 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto">
         <i data-lucide="file-search" class="w-10 h-10"></i>

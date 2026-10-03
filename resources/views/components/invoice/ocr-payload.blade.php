@@ -1,4 +1,4 @@
-<!-- Tarjeta para el JSON de Gemini / Raw -->
+<!-- Tarjeta para el JSON de OCR -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-3">
     <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">

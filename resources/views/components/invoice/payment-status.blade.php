@@ -8,7 +8,7 @@
         </span>
     </div>
 
-    <!-- Métricas Financieras Sutiles -->
+    <!-- Métricas Financieras -->
     <div class="grid grid-cols-3 gap-2 py-2 text-center bg-gray-50 rounded-lg border border-gray-100">
         <div>
             <span class="block text-[10px] font-bold text-gray-400 uppercase">Total</span>
