@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Laboratorio de Captura (Demo 1080p) - {{ config('app.name') }}</title>
+    <title>Laboratorio de Captura & Subida Binaria - {{ config('app.name') }}</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,7 +26,9 @@
 <body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col" 
       x-data="demoScanner({
           maxDimension: 1280,
-          clientQuality: 0.72
+          clientQuality: 0.72,
+          uploadUrl: '{{ route('capture.demo.upload') }}',
+          csrfToken: '{{ csrf_token() }}'
       })">
 
     <!-- HEADER FLOTANTE TIPO APP -->
@@ -38,7 +40,7 @@
             <div>
                 <span class="font-extrabold text-sm tracking-wider text-white">TALOS LAB</span>
                 <span class="text-[10px] text-emerald-400 font-semibold uppercase block leading-none">
-                    Test 1080p &bull; Local
+                    Test Binario &bull; Subida UUID
                 </span>
             </div>
         </div>
@@ -103,7 +105,7 @@
                 <div class="text-center">
                     <span class="bg-black/70 backdrop-blur-md text-emerald-300 border border-emerald-400/40 text-[10px] font-bold tracking-widest px-3.5 py-1.5 rounded-full uppercase shadow-lg inline-flex items-center space-x-1.5">
                         <i data-lucide="zap" class="w-3 h-3 text-emerald-400"></i>
-                        <span>Encuadre Oficio (1080p Test)</span>
+                        <span>Encuadre Oficio (1080p)</span>
                     </span>
                 </div>
 
@@ -116,10 +118,19 @@
         </div>
     </main>
 
-    <!-- BARRA INFERIOR CON DISPARADOR -->
+    <!-- BARRA INFERIOR CON DISPARADOR Y TELEMETRÍA DE ESTADO -->
     <footer class="absolute bottom-0 inset-x-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-5 flex flex-col items-center">
         
-        <!-- Error si falla la cámara -->
+        <!-- Estado de progreso dinámico -->
+        <div x-show="isProcessing" 
+             x-transition 
+             class="mb-3 w-full max-w-sm p-3 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl text-emerald-200 text-xs flex items-center space-x-3 backdrop-blur-md shadow-xl"
+             style="display: none;">
+            <div class="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+            <span x-text="processingStageText" class="font-medium tracking-wide"></span>
+        </div>
+
+        <!-- Error si ocurre algo -->
         <div x-show="errorMessage" 
              x-transition
              class="mb-3 w-full max-w-sm p-3.5 bg-rose-500/20 border border-rose-500/40 rounded-2xl text-rose-300 text-xs flex items-center space-x-2.5 backdrop-blur-md shadow-xl"
@@ -129,36 +140,34 @@
         </div>
 
         <div class="w-full max-w-sm flex items-center justify-center">
-            <!-- Botón Principal de Captura Demo -->
-            <button @click="captureAndSaveLocal()" 
+            <!-- Botón Principal de Captura y Subida -->
+            <button @click="captureAndUpload()" 
                     :disabled="!isCameraReady || isProcessing"
                     type="button"
-                    class="w-full py-4 px-6 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold rounded-2xl shadow-xl shadow-emerald-500/30 flex items-center justify-center space-x-3 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                    <div class="w-3.5 h-3.5 bg-white rounded-full"></div>
-                </div>
-                <span class="tracking-wider text-xs sm:text-sm">DISPARAR Y GUARDAR EN MÓVIL</span>
+                    class="w-full py-4 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 active:scale-95 text-white font-extrabold rounded-2xl shadow-xl shadow-emerald-500/25 flex items-center justify-center space-x-3 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="cloud-upload" class="w-5 h-5"></i>
+                <span class="tracking-wider text-xs sm:text-sm">CAPTURAR Y SUBIR EN BINARIO</span>
             </button>
         </div>
     </footer>
 
-    <!-- MODAL DE RESULTADOS Y TELEMETRÍA LOCAL -->
+    <!-- MODAL DE RESULTADOS Y TELEMETRÍA COMPLETA -->
     <div x-show="showResultModal" 
          x-transition.opacity
-         class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+         class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
          style="display: none;">
         
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-5 flex flex-col space-y-4 shadow-2xl">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-5 flex flex-col space-y-4 shadow-2xl my-auto">
             
             <!-- Cabecera de Telemetría -->
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div class="flex items-center space-x-2">
-                    <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                        <i data-lucide="check" class="w-4 h-4"></i>
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-sm text-white">Captura Local Exitosa</h3>
-                        <p class="text-[10px] text-gray-400">Guardada en la memoria del dispositivo</p>
+                        <h3 class="font-bold text-sm text-white">Captura y Subida Exitosa</h3>
+                        <p class="text-[10px] text-emerald-400 font-medium">Almacenada en servidor con UUID (Binario)</p>
                     </div>
                 </div>
                 <button @click="closeResultModal()" class="text-gray-400 hover:text-white p-1 rounded-md cursor-pointer">
@@ -166,60 +175,107 @@
                 </button>
             </div>
 
-            <!-- Métricas en Tarjetas -->
+            <!-- Fila 1 de Métricas: Desglose de Tiempos -->
             <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-                    <span class="text-[10px] font-bold text-gray-400 block uppercase">Tiempo</span>
-                    <span class="text-base font-black text-emerald-400" x-text="metrics.processingTimeMs + ' ms'"></span>
+                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">1. Captura Móvil</span>
+                    <span class="text-sm font-black text-emerald-400" x-text="metrics.captureTimeMs + ' ms'"></span>
+                    <span class="text-[8px] text-gray-500 block">Render + JPEG</span>
                 </div>
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-                    <span class="text-[10px] font-bold text-gray-400 block uppercase">Peso JPG</span>
-                    <span class="text-base font-black text-sky-400" x-text="metrics.fileSizeKb + ' KB'"></span>
+                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">2. Envío Red</span>
+                    <span class="text-sm font-black text-sky-400" x-text="metrics.uploadTimeMs + ' ms'"></span>
+                    <span class="text-[8px] text-gray-500 block">HTTP Multipart</span>
                 </div>
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-                    <span class="text-[10px] font-bold text-gray-400 block uppercase">Resolución</span>
-                    <span class="text-[11px] font-black text-amber-400 block mt-1" x-text="metrics.dimensions"></span>
+                <div class="bg-slate-950 p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/10">
+                    <span class="text-[9px] font-bold text-emerald-400 block uppercase">Tiempo Total</span>
+                    <span class="text-sm font-black text-white" x-text="metrics.totalTimeMs + ' ms'"></span>
+                    <span class="text-[8px] text-emerald-400/70 block">Móvil + Red</span>
+                </div>
+            </div>
+
+            <!-- Fila 2 de Métricas: Carga y Almacenamiento -->
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Servidor (SSD)</span>
+                    <span class="text-sm font-black text-teal-400" x-text="metrics.serverDiskTimeMs + ' ms'"></span>
+                    <span class="text-[8px] text-gray-500 block">Escritura física</span>
+                </div>
+                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Peso JPG</span>
+                    <span class="text-sm font-black text-amber-400" x-text="metrics.fileSizeKb + ' KB'"></span>
+                    <span class="text-[8px] text-gray-500 block">Binario directo</span>
+                </div>
+                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Dimensiones</span>
+                    <span class="text-[11px] font-black text-purple-400 block mt-0.5" x-text="metrics.dimensions"></span>
+                    <span class="text-[8px] text-gray-500 block">Encuadre exacto</span>
+                </div>
+            </div>
+
+            <!-- Identificador UUID en Servidor -->
+            <div class="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl space-y-1">
+                <div class="flex items-center justify-between text-[10px]">
+                    <span class="text-gray-400 font-semibold uppercase tracking-wider">UUID en Servidor:</span>
+                    <span class="text-emerald-400 font-mono font-bold" x-text="metrics.uuid"></span>
+                </div>
+                <div class="flex items-center justify-between text-[10px]">
+                    <span class="text-gray-400 font-semibold uppercase tracking-wider">Ubicación:</span>
+                    <span class="text-gray-300 font-mono text-[9px] truncate max-w-[200px]" x-text="metrics.filePath"></span>
                 </div>
             </div>
 
             <!-- Previsualización de la Foto Resultante -->
-            <div class="bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center max-h-[38vh] relative group">
-                <img :src="capturedImageUrl" alt="Captura local" class="max-h-[38vh] w-auto object-contain">
+            <div class="bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center max-h-[30vh] relative group">
+                <img :src="capturedImageUrl" alt="Captura demo" class="max-h-[30vh] w-auto object-contain">
                 <div class="absolute bottom-2 inset-x-2 bg-black/60 backdrop-blur-xs text-[10px] text-center text-gray-300 py-1 rounded-lg">
-                    Revisa con tus dedos la nitidez de letras y números
+                    Foto recortada enviada en binario al servidor
                 </div>
             </div>
 
             <!-- Botones de Acción -->
             <div class="space-y-2 pt-1">
-                <a :href="capturedImageUrl" 
-                   :download="capturedFileName"
-                   class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-600/20">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                    <span>Volver a descargar imagen</span>
-                </a>
-
                 <button @click="closeResultModal()" 
                         type="button"
-                        class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-gray-200 font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition">
+                        class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-600/20 cursor-pointer">
                     <i data-lucide="camera" class="w-4 h-4"></i>
                     <span>Disparar otra captura</span>
                 </button>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <a :href="metrics.fileUrl" 
+                       target="_blank"
+                       class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-sky-400 font-semibold rounded-xl text-[11px] flex items-center justify-center space-x-1.5 transition text-center">
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        <span>Ver en Servidor</span>
+                    </a>
+
+                    <a :href="capturedImageUrl" 
+                       :download="capturedFileName"
+                       class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-gray-300 font-semibold rounded-xl text-[11px] flex items-center justify-center space-x-1.5 transition text-center">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Copia Móvil</span>
+                    </a>
+                </div>
             </div>
 
         </div>
     </div>
 
-    <!-- SCRIPT ALPINE.JS 100% LOCAL -->
+    <!-- SCRIPT ALPINE.JS CON TELEMETRÍA DE SUBIDA -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('demoScanner', (config = {}) => ({
                 maxDimension: config.maxDimension || 1280,
                 clientQuality: config.clientQuality || 0.72,
+                uploadUrl: config.uploadUrl || '/scan-demo/upload',
+                csrfToken: config.csrfToken || '',
+                
                 stream: null,
                 isCameraReady: false,
                 cameraError: false,
                 isProcessing: false,
+                processingStageText: '',
                 errorMessage: '',
                 hasTorch: false,
                 torchOn: false,
@@ -229,9 +285,15 @@
                 capturedImageUrl: '',
                 capturedFileName: '',
                 metrics: {
-                    processingTimeMs: 0,
+                    captureTimeMs: 0,
+                    uploadTimeMs: 0,
+                    totalTimeMs: 0,
+                    serverDiskTimeMs: 0,
                     fileSizeKb: 0,
-                    dimensions: ''
+                    dimensions: '',
+                    uuid: '',
+                    filePath: '',
+                    fileUrl: ''
                 },
 
                 init() {
@@ -252,7 +314,6 @@
                     this.isCameraReady = false;
 
                     try {
-                        // 1080p Full HD en lugar de 4K
                         this.stream = await navigator.mediaDevices.getUserMedia({
                             video: { 
                                 facingMode: { ideal: 'environment' },
@@ -306,10 +367,9 @@
                     }
                 },
 
-                captureAndSaveLocal() {
+                captureAndUpload() {
                     if (!this.isCameraReady || this.isProcessing) return;
 
-                    const startTime = performance.now();
                     const video = this.$refs.video;
                     const guideBox = this.$refs.guideBox;
 
@@ -322,8 +382,12 @@
                     }
 
                     this.isProcessing = true;
+                    this.errorMessage = '';
+                    this.processingStageText = '1/2 Recortando y procesando imagen en el móvil...';
 
-                    // Geometría para recorte exacto de la guía
+                    // Paso 1: Captura y recorte local (medición de tiempo)
+                    const captureStartTime = performance.now();
+
                     const videoRect = video.getBoundingClientRect();
                     const guideRect = guideBox.getBoundingClientRect();
 
@@ -350,7 +414,6 @@
                     cropWidth = Math.min(cropWidth, videoWidth - cropX);
                     cropHeight = Math.min(cropHeight, videoHeight - cropY);
 
-                    // Escalado con tope a maxDimension (1280px)
                     let targetWidth = Math.round(cropWidth);
                     let targetHeight = Math.round(cropHeight);
                     const maxDim = this.maxDimension;
@@ -365,7 +428,6 @@
                         }
                     }
 
-                    // Renderizado ultra liviano en Canvas
                     const croppedCanvas = document.createElement('canvas');
                     croppedCanvas.width = targetWidth;
                     croppedCanvas.height = targetHeight;
@@ -377,39 +439,76 @@
                         0, 0, targetWidth, targetHeight
                     );
 
-                    // Compresión JPEG local
-                    croppedCanvas.toBlob((blob) => {
-                        const endTime = performance.now();
-                        this.isProcessing = false;
+                    // Generar Blob JPEG binario
+                    croppedCanvas.toBlob(async (blob) => {
+                        const captureEndTime = performance.now();
+                        const captureTimeMs = Math.round(captureEndTime - captureStartTime);
 
                         if (!blob) {
-                            this.errorMessage = 'Error al generar la imagen.';
+                            this.isProcessing = false;
+                            this.errorMessage = 'Error al generar la imagen del encuadre.';
                             return;
                         }
 
-                        // Calcular métricas
-                        this.metrics.processingTimeMs = Math.round(endTime - startTime);
-                        this.metrics.fileSizeKb = (blob.size / 1024).toFixed(1);
-                        this.metrics.dimensions = targetWidth + ' x ' + targetHeight;
-
-                        // Crear URL local del objeto
+                        // URL local de previsualización
                         if (this.capturedImageUrl) {
                             URL.revokeObjectURL(this.capturedImageUrl);
                         }
                         this.capturedImageUrl = URL.createObjectURL(blob);
-                        this.capturedFileName = 'captura_demo_' + Date.now() + '.jpg';
+                        this.capturedFileName = 'captura_' + Date.now() + '.jpg';
 
-                        // Disparar descarga automática al almacenamiento del móvil
-                        const downloadLink = document.createElement('a');
-                        downloadLink.href = this.capturedImageUrl;
-                        downloadLink.download = this.capturedFileName;
-                        document.body.appendChild(downloadLink);
-                        downloadLink.click();
-                        document.body.removeChild(downloadLink);
+                        // Paso 2: Envío binario (POST multipart) al servidor
+                        this.processingStageText = '2/2 Subiendo binario al servidor (HTTP POST)...';
+                        const uploadStartTime = performance.now();
 
-                        // Mostrar HUD de resultados
-                        this.showResultModal = true;
-                        this.refreshIcons();
+                        try {
+                            const formData = new FormData();
+                            formData.append('image', blob, 'scan_mobile.jpg');
+                            if (this.csrfToken) {
+                                formData.append('_token', this.csrfToken);
+                            }
+
+                            const response = await fetch(this.uploadUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': this.csrfToken,
+                                    'Accept': 'application/json'
+                                },
+                                body: formData
+                            });
+
+                            const uploadEndTime = performance.now();
+                            const uploadTimeMs = Math.round(uploadEndTime - uploadStartTime);
+
+                            const result = await response.json();
+
+                            if (!response.ok || !result.success) {
+                                throw new Error(result.message || 'Error en el servidor al almacenar la imagen.');
+                            }
+
+                            // Registrar métricas completas
+                            this.metrics = {
+                                captureTimeMs: captureTimeMs,
+                                uploadTimeMs: uploadTimeMs,
+                                totalTimeMs: captureTimeMs + uploadTimeMs,
+                                serverDiskTimeMs: result.server_disk_time_ms || 0,
+                                fileSizeKb: (blob.size / 1024).toFixed(1),
+                                dimensions: targetWidth + ' x ' + targetHeight,
+                                uuid: result.uuid || '',
+                                filePath: result.file_path || '',
+                                fileUrl: result.file_url || ''
+                            };
+
+                            this.isProcessing = false;
+                            this.showResultModal = true;
+                            this.refreshIcons();
+
+                        } catch (err) {
+                            this.isProcessing = false;
+                            this.errorMessage = 'Fallo en la subida: ' + err.message;
+                            console.error('Error al subir imagen binaria:', err);
+                            this.refreshIcons();
+                        }
 
                     }, 'image/jpeg', this.clientQuality);
                 },

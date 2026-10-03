@@ -134,4 +134,33 @@ class InvoiceProcessingTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['image']);
     }
+
+    public function test_upload_demo_stores_image_with_uuid(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+
+        $file = UploadedFile::fake()->image('scan_demo.jpg', 838, 1280);
+
+        $response = $this->actingAs($user)->postJson(route('capture.demo.upload'), [
+            'image' => $file,
+        ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+            ])
+            ->assertJsonStructure([
+                'success',
+                'uuid',
+                'file_name',
+                'file_path',
+                'file_url',
+                'size_kb',
+                'server_disk_time_ms',
+            ]);
+
+        $data = $response->json();
+        Storage::disk('public')->assertExists($data['file_path']);
+    }
 }

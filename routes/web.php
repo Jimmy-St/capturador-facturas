@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     // Módulo de Captura en Terreno y Procesamiento (Accesible por operator, supervisor y admin)
     Route::get('/scan', [CaptureController::class, 'index'])->name('capture.index');
     Route::view('/scan-demo', 'capture.demo')->name('capture.demo');
+    Route::post('/scan-demo/upload', [CaptureController::class, 'uploadDemo'])->name('capture.demo.upload');
     Route::post('/invoices/process', [InvoiceController::class, 'processInvoice'])->name('invoices.process');
 
     // Panel de Auditoría y Dashboard (Solo supervisor y admin)
