@@ -55,6 +55,7 @@
         <!-- Columna Izquierda: Datos Operativos Editables del Documento -->
         <div class="lg:col-span-2 space-y-5">
             @include('components.invoice.form')
+            @include('components.invoice.items')
             @include('components.invoice.ocr-payload')
         </div>
 

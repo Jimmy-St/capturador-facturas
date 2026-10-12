@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{config('app.name')}} - {{config('app.tagline')}}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -13,9 +14,27 @@
 
     <div class="bg-white p-8 rounded-xl shadow-xl w-80 max-w-md border border-gray-100">
         
-        <!-- Icono superior con tono anaranjado -->
+        <!-- Icono superior con degradé vibrante Talos -->
         <div class="flex justify-center mb-1">
-            <i data-lucide="shield-check" class="w-24 h-24 text-orange-500 stroke-1"></i>
+            <svg class="w-24 h-24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 10px rgba(249, 115, 22, 0.22));">
+                <defs>
+                    <linearGradient id="talos-login-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#f97316" />
+                        <stop offset="100%" stop-color="#f59e0b" />
+                    </linearGradient>
+                </defs>
+                <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" 
+                      stroke="url(#talos-login-grad)" 
+                      stroke-width="1.15" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" />
+                <path d="m9 12 2 2 4-4" 
+                      fill="none" 
+                      stroke="url(#talos-login-grad)" 
+                      stroke-width="1.25" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" />
+            </svg>
         </div>
 
         <h2 class="text-center text-xl font-extrabold text-gray-800 tracking-wide uppercase mb-1">{{config('app.name')}}</h2>
