@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Services\GeminiService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -67,9 +68,26 @@ class InvoiceController extends Controller
         ]);
     }
 
-    // NUEVO: Método para actualizar los campos editables del formulario principal
-    public function update(Request $request, Invoice $invoice)
+    /**
+     * Updates invoice operational data from the show form.
+     *
+     * @param  Request  $request  The incoming request with updated fields.
+     * @param  Invoice  $invoice  The invoice instance to update.
+     * @return RedirectResponse Redirects back with flash success message.
+     */
+    public function update(Request $request, Invoice $invoice): RedirectResponse
     {
+        if ($request->has('amount')) {
+            $rawAmount = trim(str_replace([' ', '$'], '', (string) $request->input('amount')));
+            if (str_contains($rawAmount, '.') && str_contains($rawAmount, ',')) {
+                $rawAmount = str_replace('.', '', $rawAmount);
+                $rawAmount = str_replace(',', '.', $rawAmount);
+            } else {
+                $rawAmount = str_replace(',', '.', $rawAmount);
+            }
+            $request->merge(['amount' => $rawAmount]);
+        }
+
         $validated = $request->validate([
             'document_type' => 'required|string|max:255',
             'folio' => 'required|string|max:255',

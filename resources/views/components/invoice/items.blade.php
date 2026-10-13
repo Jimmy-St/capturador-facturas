@@ -52,7 +52,7 @@
                 <div class="py-8 px-4 text-center space-y-1 text-gray-400">
                     <i data-lucide="inbox" class="w-6 h-6 mx-auto text-gray-300"></i>
                     <p class="text-xs font-semibold text-gray-500">No se registraron ítems en este documento</p>
-                    <p class="text-[11px] text-gray-400">La factura no contiene líneas de detalle o no fueron reconocidas en el OCR.</p>
+                    <p class="text-[11px] text-gray-400">El documento no contiene líneas de detalle o no fueron reconocidas en el OCR.</p>
                 </div>
             @endif
         </div>

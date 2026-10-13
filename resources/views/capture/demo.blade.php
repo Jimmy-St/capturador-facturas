@@ -754,7 +754,7 @@
                                 totalTimeMs: captureTimeMs + totalRequestMs,
                                 fileSizeKb: (blob.size / 1024).toFixed(1),
                                 dimensions: targetWidth + ' x ' + targetHeight,
-                                tokensCost: result.ocr_data?.tokens_cost || 0,
+                                tokensCost: result.ocr_data?.tokens_cost || ((result.ocr_data?.tokens_in || 0) + (result.ocr_data?.tokens_out || 0)),
                                 uuid: result.uuid || '',
                                 filePath: result.file_path || '',
                                 fileUrl: result.file_url || '',

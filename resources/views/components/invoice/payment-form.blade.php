@@ -15,7 +15,7 @@
                     Saldo sugerido
                 </button>
             </div>
-            <input type="number" step="0.01" min="1" x-model="newPayment.amount" required placeholder="Ej. 50000" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-gray-900 focus:bg-white focus:border-emerald-500 outline-none transition">
+            <input type="text" inputmode="decimal" x-model="newPayment.amount" required placeholder="Ej. 50000" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-gray-900 focus:bg-white focus:border-emerald-500 outline-none transition">
         </div>
 
         <!-- Fecha de Pago -->

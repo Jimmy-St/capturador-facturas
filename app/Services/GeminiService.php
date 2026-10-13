@@ -126,11 +126,8 @@ class GeminiService
             throw new Exception('OCR response is not valid JSON.');
         }
 
-        // Extraer consumo real de tokens desde usageMetadata en la respuesta raíz de Google
-        $tokensCost = $responseData['usageMetadata']['totalTokenCount']
-            ?? (($responseData['usageMetadata']['promptTokenCount'] ?? 0) + ($responseData['usageMetadata']['candidatesTokenCount'] ?? 0));
-
-        $parsed['tokens_cost'] = (int) $tokensCost;
+        $parsed['tokens_in'] = (int) ($responseData['usageMetadata']['promptTokenCount'] ?? 0);
+        $parsed['tokens_out'] = (int) ($responseData['usageMetadata']['candidatesTokenCount'] ?? 0);
 
         return $parsed;
     }

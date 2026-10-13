@@ -47,7 +47,7 @@
         <!-- Monto Total Facturado -->
         <div class="space-y-1">
             <label class="block text-xs font-semibold text-gray-500">Monto Total Facturado ($)</label>
-            <input type="number" step="0.01" name="amount" value="{{ old('amount', $invoice->amount) }}" 
+            <input type="text" inputmode="decimal" name="amount" value="{{ old('amount', $invoice->amount) }}" 
                 class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-orange-600 focus:bg-white focus:border-orange-500 outline-none transition">
         </div>
 

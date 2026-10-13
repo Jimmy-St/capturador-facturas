@@ -62,7 +62,7 @@ class ProcessInvoiceOcr implements ShouldQueue
                 'reception_date' => now(),
                 'amount' => $this->parseAmount($response['total'] ?? 0),
                 'fidelity' => $this->mapFidelity((int) ($response['fidelidad_estimada'] ?? 0)),
-                'tokens_cost' => (int) ($response['tokens_cost'] ?? 0),
+                'tokens_cost' => (int) ($response['tokens_cost'] ?? (($response['tokens_in'] ?? 0) + ($response['tokens_out'] ?? 0))),
                 'payment_status' => 'adeudado',
                 'image_path' => $imagePath,
                 'raw_response_json' => json_encode($response, JSON_UNESCAPED_UNICODE),

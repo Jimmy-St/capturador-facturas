@@ -13,9 +13,24 @@ class InvoicePaymentController extends Controller
 {
     /**
      * Store a newly created payment with its proof image.
+     *
+     * @param  Request  $request  The HTTP request containing payment data and receipt image.
+     * @param  Invoice  $invoice  The invoice being paid.
+     * @return JsonResponse JSON payload with operation result.
      */
     public function store(Request $request, Invoice $invoice): JsonResponse
     {
+        if ($request->has('amount')) {
+            $rawAmount = trim(str_replace([' ', '$'], '', (string) $request->input('amount')));
+            if (str_contains($rawAmount, '.') && str_contains($rawAmount, ',')) {
+                $rawAmount = str_replace('.', '', $rawAmount);
+                $rawAmount = str_replace(',', '.', $rawAmount);
+            } else {
+                $rawAmount = str_replace(',', '.', $rawAmount);
+            }
+            $request->merge(['amount' => $rawAmount]);
+        }
+
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
             'payment_date' => ['required', 'date'],

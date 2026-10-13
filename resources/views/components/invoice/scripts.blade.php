@@ -187,7 +187,9 @@
                     this.paymentError = 'Debes adjuntar una imagen o PDF del comprobante o cheque.';
                     return;
                 }
-                if (this.newPayment.amount <= 0) {
+                const cleanAmountStr = String(this.newPayment.amount ?? '').trim().replace(/\s+/g, '').replace(',', '.');
+                const parsedAmount = parseFloat(cleanAmountStr);
+                if (!parsedAmount || parsedAmount <= 0 || isNaN(parsedAmount)) {
                     this.paymentError = 'El monto debe ser superior a 0.';
                     return;
                 }
@@ -197,7 +199,7 @@
                 this.paymentSuccess = '';
 
                 const formData = new FormData();
-                formData.append('amount', this.newPayment.amount);
+                formData.append('amount', cleanAmountStr);
                 formData.append('payment_date', this.newPayment.payment_date);
                 formData.append('payment_method', this.newPayment.payment_method);
                 if (this.newPayment.reference_number) {
