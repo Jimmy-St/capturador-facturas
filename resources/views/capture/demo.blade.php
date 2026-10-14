@@ -26,8 +26,9 @@
 </head>
 <body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col relative select-none" 
       x-data="demoScanner({
-          maxDimension: 1280,
-          clientQuality: 0.90,
+          targetWidth: 760,
+          maxHeight: 1530,
+          clientQuality: 0.85,
           uploadUrl: '{{ route('capture.demo.upload') }}',
           csrfToken: '{{ csrf_token() }}'
       })">
@@ -225,7 +226,7 @@
                 <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
                     <span class="text-[8px] font-bold text-gray-400 block uppercase">1. Móvil</span>
                     <span class="text-xs font-black text-emerald-400 block mt-0.5" x-text="metrics.captureTimeMs + ' ms'"></span>
-                    <span class="text-[7px] text-gray-500 block">Render+WebP</span>
+                    <span class="text-[7px] text-gray-500 block">Render+JPEG</span>
                 </div>
                 <div class="bg-slate-950 p-2 rounded-xl border border-slate-800/80">
                     <span class="text-[8px] font-bold text-gray-400 block uppercase">2. Red 4G</span>
@@ -252,14 +253,14 @@
                     <span class="text-[8px] text-purple-300/70 block">Extremo a extremo</span>
                 </div>
                 <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Peso WebP</span>
+                    <span class="text-[9px] font-bold text-gray-400 block uppercase">Peso JPEG</span>
                     <span class="text-sm font-black text-amber-400" x-text="metrics.fileSizeKb + ' KB'"></span>
                     <span class="text-[8px] text-gray-500 block" x-text="metrics.dimensions"></span>
                 </div>
                 <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
                     <span class="text-[9px] font-bold text-gray-400 block uppercase">Tokens IA</span>
                     <span class="text-sm font-black text-pink-400" x-text="metrics.tokensCost"></span>
-                    <span class="text-[8px] text-gray-500 block">Consumo Google</span>
+                    <span class="text-[8px] text-gray-400 block" x-text="'In: ' + metrics.tokensIn + ' | Out: ' + metrics.tokensOut"></span>
                 </div>
             </div>
 
@@ -355,8 +356,9 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('demoScanner', (config = {}) => ({
-                maxDimension: config.maxDimension || 1280,
-                clientQuality: config.clientQuality || 0.70,
+                targetWidth: config.targetWidth || 760,
+                maxHeight: config.maxHeight || 1530,
+                clientQuality: config.clientQuality || 0.85,
                 uploadUrl: config.uploadUrl || '/scan-demo/upload',
                 csrfToken: config.csrfToken || '',
                 
@@ -392,6 +394,8 @@
                     fileSizeKb: 0,
                     dimensions: '',
                     tokensCost: 0,
+                    tokensIn: 0,
+                    tokensOut: 0,
                     uuid: '',
                     filePath: '',
                     fileUrl: '',
@@ -634,18 +638,17 @@
                     cropWidth = Math.min(cropWidth, videoWidth - cropX);
                     cropHeight = Math.min(cropHeight, videoHeight - cropY);
 
-                    let targetWidth = Math.round(cropWidth);
-                    let targetHeight = Math.round(cropHeight);
-                    const maxDim = this.maxDimension;
+                    // Dimensionamiento optimizado para tokens de Gemini (1 columna de 768px y máx 2 filas de 768px)
+                    const baseWidth = this.targetWidth || 760;
+                    const maxH = this.maxHeight || 1530;
 
-                    if (targetWidth > maxDim || targetHeight > maxDim) {
-                        if (targetWidth >= targetHeight) {
-                            targetHeight = Math.round((targetHeight * maxDim) / targetWidth);
-                            targetWidth = maxDim;
-                        } else {
-                            targetWidth = Math.round((targetWidth * maxDim) / targetHeight);
-                            targetHeight = maxDim;
-                        }
+                    let targetWidth = baseWidth;
+                    let targetHeight = Math.round((cropHeight * baseWidth) / cropWidth);
+
+                    // Si sobrepasa el límite antes del 3er tile vertical (1530px), limitamos altura
+                    if (targetHeight > maxH) {
+                        targetHeight = maxH;
+                        targetWidth = Math.round((cropWidth * maxH) / cropHeight);
                     }
 
                     const croppedCanvas = document.createElement('canvas');
@@ -676,7 +679,7 @@
                         this.refreshIcons();
                     }, 750);
 
-                    // Generar Blob WebP binario ultra liviano (calidad 70)
+                    // Generar Blob JPEG binario acelerado por hardware (calidad 85%)
                     croppedCanvas.toBlob(async (blob) => {
                         const captureEndTime = performance.now();
                         const captureTimeMs = Math.round(captureEndTime - captureStartTime);
@@ -693,7 +696,7 @@
                             URL.revokeObjectURL(this.capturedImageUrl);
                         }
                         this.capturedImageUrl = URL.createObjectURL(blob);
-                        this.capturedFileName = 'captura_' + Date.now() + '.webp';
+                        this.capturedFileName = 'captura_' + Date.now() + '.jpg';
 
                         // Guardar automáticamente copia física en el almacenamiento del móvil
                         const autoSaveLink = document.createElement('a');
@@ -709,7 +712,7 @@
 
                         try {
                             const formData = new FormData();
-                            formData.append('image', blob, 'scan_mobile.webp');
+                            formData.append('image', blob, 'scan_mobile.jpg');
                             if (this.csrfToken) {
                                 formData.append('_token', this.csrfToken);
                             }
@@ -755,6 +758,8 @@
                                 fileSizeKb: (blob.size / 1024).toFixed(1),
                                 dimensions: targetWidth + ' x ' + targetHeight,
                                 tokensCost: result.ocr_data?.tokens_cost || ((result.ocr_data?.tokens_in || 0) + (result.ocr_data?.tokens_out || 0)),
+                                tokensIn: result.ocr_data?.tokens_in || 0,
+                                tokensOut: result.ocr_data?.tokens_out || 0,
                                 uuid: result.uuid || '',
                                 filePath: result.file_path || '',
                                 fileUrl: result.file_url || '',
@@ -779,7 +784,7 @@
                             this.refreshIcons();
                         }
 
-                    }, 'image/webp', this.clientQuality);
+                    }, 'image/jpeg', this.clientQuality);
                 },
 
                 closeResultModal() {
