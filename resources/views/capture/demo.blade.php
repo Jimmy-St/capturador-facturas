@@ -241,7 +241,7 @@
                 <div class="bg-slate-950 p-2 rounded-xl border border-purple-500/40 bg-purple-950/20">
                     <span class="text-[8px] font-bold text-purple-300 block uppercase">4. Gemini IA</span>
                     <span class="text-xs font-black text-purple-400 block mt-0.5" x-text="metrics.geminiTimeMs + ' ms'"></span>
-                    <span class="text-[7px] text-purple-400/70 block">OCR API</span>
+                    <span class="text-[7px] text-purple-300/80 block font-mono truncate" x-text="metrics.modelVersion ? metrics.modelVersion.replace('gemini-', '') : 'OCR API'"></span>
                 </div>
             </div>
 
@@ -271,10 +271,15 @@
                         <i data-lucide="file-check" class="w-3.5 h-3.5 text-purple-400 inline"></i>
                         <span>Datos Extraídos por Gemini</span>
                     </span>
-                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                          :class="metrics.ocrData?.fidelidad_estimada >= 80 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'"
-                          x-text="'Fidelidad: ' + (metrics.ocrData?.fidelidad_estimada || 0) + '%'">
-                    </span>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono font-bold"
+                              x-show="metrics.modelVersion"
+                              x-text="metrics.modelVersion"></span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                              :class="metrics.ocrData?.fidelidad_estimada >= 80 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'"
+                              x-text="'Fidelidad: ' + (metrics.ocrData?.fidelidad_estimada || 0) + '%'">
+                        </span>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 text-xs">
@@ -305,6 +310,10 @@
 
             <!-- Identificador UUID en Servidor -->
             <div class="bg-slate-950/80 border border-slate-800 p-2 rounded-xl space-y-0.5 text-[9px]">
+                <div class="flex items-center justify-between" x-show="metrics.modelVersion">
+                    <span class="text-gray-400 font-semibold uppercase">Motor IA:</span>
+                    <span class="text-sky-400 font-mono font-bold truncate max-w-[230px]" x-text="metrics.modelVersion + (metrics.modelAlias && metrics.modelAlias !== metrics.modelVersion ? ' (' + metrics.modelAlias + ')' : '')"></span>
+                </div>
                 <div class="flex items-center justify-between">
                     <span class="text-gray-400 font-semibold uppercase">UUID:</span>
                     <span class="text-purple-400 font-mono font-bold truncate max-w-[230px]" x-text="metrics.uuid"></span>
@@ -396,6 +405,8 @@
                     tokensCost: 0,
                     tokensIn: 0,
                     tokensOut: 0,
+                    modelVersion: '',
+                    modelAlias: '',
                     uuid: '',
                     filePath: '',
                     fileUrl: '',
@@ -760,6 +771,8 @@
                                 tokensCost: result.ocr_data?.tokens_cost || ((result.ocr_data?.tokens_in || 0) + (result.ocr_data?.tokens_out || 0)),
                                 tokensIn: result.ocr_data?.tokens_in || 0,
                                 tokensOut: result.ocr_data?.tokens_out || 0,
+                                modelVersion: result.model_version || result.ocr_data?.model_version || '',
+                                modelAlias: result.model_alias || result.ocr_data?.model_alias || '',
                                 uuid: result.uuid || '',
                                 filePath: result.file_path || '',
                                 fileUrl: result.file_url || '',

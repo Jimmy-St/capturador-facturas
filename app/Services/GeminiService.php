@@ -17,7 +17,7 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key', env('GEMINI_API_KEY', ''));
-        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-flash-latest'));
+        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-flash-lite-latest'));
         $this->timeout = (int) config('services.gemini.timeout', env('GEMINI_TIMEOUT', 20));
     }
 
@@ -128,6 +128,8 @@ class GeminiService
 
         $parsed['tokens_in'] = (int) ($responseData['usageMetadata']['promptTokenCount'] ?? 0);
         $parsed['tokens_out'] = (int) ($responseData['usageMetadata']['candidatesTokenCount'] ?? 0);
+        $parsed['model_version'] = (string) ($responseData['modelVersion'] ?? $this->model);
+        $parsed['model_alias'] = $this->model;
 
         return $parsed;
     }

@@ -73,6 +73,8 @@ class CaptureController extends Controller
             'ocr_success' => $ocrSuccess,
             'ocr_error' => $ocrError,
             'ocr_data' => $ocrResponse,
+            'model_version' => $ocrResponse['model_version'] ?? config('services.gemini.model'),
+            'model_alias' => $ocrResponse['model_alias'] ?? config('services.gemini.model'),
             'message' => 'Imagen procesada y analizada correctamente.',
         ]);
     }

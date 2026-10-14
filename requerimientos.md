@@ -154,5 +154,5 @@ Variables de entorno configurables en `.env`:
 | `INVOICE_IMAGE_QUALITY` | Calidad de compresión JPEG en backend (GD) | `75` |
 | `INVOICE_CLIENT_QUALITY` | Calidad de exportación inicial en canvas del cliente | `0.85` |
 | `GEMINI_TIMEOUT` | Timeout en segundos para peticiones a la API de Gemini | `20` |
-| `GEMINI_MODEL` | Modelo de Gemini utilizado para OCR | `gemini-flash-latest` |
+| `GEMINI_MODEL` | Modelo de Gemini utilizado para OCR | `gemini-flash-lite-latest` |
 | `PAGINATION_PER_PAGE` | Cantidad de facturas por página en el Dashboard | `40` |
