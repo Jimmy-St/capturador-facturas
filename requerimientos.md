@@ -1,4 +1,4 @@
-# 🛡️ Talos - Observador de Facturas (Documento de Requerimientos y Arquitectura)
+# 🛡️ Talos - Observador Documental (Documento de Requerimientos y Arquitectura)
 
 Sistema de captura, procesamiento inteligente con IA (OCR), auditoría tributaria y control de pagos de facturas físicas en terreno.
 

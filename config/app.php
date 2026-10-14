@@ -15,7 +15,7 @@ return [
 
     'name' => env('APP_NAME', 'TALOS'),
 
-    'tagline' => env('APP_TAGLINE', 'Observador de Facturas'),
+    'tagline' => env('APP_TAGLINE', 'Observador Documental'),
 
     'client' => env('APP_CLIENT', 'Pfau'),
 
