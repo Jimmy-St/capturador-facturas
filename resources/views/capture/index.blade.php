@@ -26,19 +26,37 @@
     </style>
 <body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col" 
       x-data="documentScanner({
-          maxDimension: {{ config('invoices.max_dimension', 1800) }},
+          targetWidth: {{ config('invoices.target_width', 760) }},
+          maxHeight: {{ config('invoices.max_height', 1530) }},
           clientQuality: {{ config('invoices.client_quality', 0.85) }}
       })">
 
     <!-- HEADER FLOTANTE TIPO APP -->
-    <header class="absolute top-0 inset-x-0 z-40 bg-gradient-to-b from-black/85 via-black/40 to-transparent p-4 flex items-center justify-between">
-        <div class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
-            </div>
-            <div>
-                <span class="font-extrabold text-sm tracking-wider text-white">TALOS</span>
-                <span class="text-[10px] text-orange-400 font-semibold uppercase block leading-none">
+    <header class="absolute top-0 inset-x-0 z-40 bg-gradient-to-b from-black/80 via-black/30 to-transparent pt-2.5 pb-2 px-3.5 flex items-center justify-between pointer-events-auto">
+        <div class="flex items-center space-x-2">
+            <!-- Logo Flotante sin marco con degradé naranja del login -->
+            <svg class="w-9 h-9 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 8px rgba(249, 115, 22, 0.45));">
+                <defs>
+                    <linearGradient id="talos-scan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#f97316" />
+                        <stop offset="100%" stop-color="#f59e0b" />
+                    </linearGradient>
+                </defs>
+                <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" 
+                      stroke="url(#talos-scan-grad)" 
+                      stroke-width="1.5" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" />
+                <path d="m9 12 2 2 4-4" 
+                      fill="none" 
+                      stroke="url(#talos-scan-grad)" 
+                      stroke-width="1.8" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" />
+            </svg>
+            <div class="flex flex-col">
+                <span class="font-black text-sm tracking-wider text-white leading-none">TALOS</span>
+                <span class="text-[9px] text-orange-400 font-extrabold uppercase tracking-widest mt-0.5 leading-none">
                     {{ auth()->user()->role ?? 'Scanner' }}
                 </span>
             </div>
@@ -55,10 +73,10 @@
                 <i data-lucide="flashlight" class="w-4 h-4"></i>
             </button>
 
-            <!-- Acceso a Dashboard para Supervisor/Admin -->
+            <!-- Acceso a Dashboard para Supervisor/Admin (Oculto para Operator) -->
             @auth
                 @if(auth()->user()->role !== 'operator')
-                    <a href="{{ route('dashboard') }}" class="bg-white/10 hover:bg-white/20 active:scale-95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 border border-white/10">
+                    <a href="{{ route('dashboard') }}" class="bg-white/10 hover:bg-white/20 active:scale-95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 border border-white/10 text-white">
                         <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 text-orange-400"></i>
                         <span>Dashboard</span>
                     </a>
@@ -68,7 +86,7 @@
             <!-- Salir / Logout -->
             <form action="{{ route('logout') }}" method="POST" class="inline-flex">
                 @csrf
-                <button type="submit" class="bg-white/10 hover:bg-rose-500/20 hover:text-rose-400 active:scale-95 backdrop-blur-md p-2 rounded-full text-xs transition" title="Cerrar sesión">
+                <button type="submit" class="bg-white/10 hover:bg-rose-500/20 hover:text-rose-400 active:scale-95 backdrop-blur-md p-2 rounded-full text-xs transition text-gray-300" title="Cerrar sesión">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                 </button>
             </form>
@@ -93,30 +111,34 @@
             <p class="text-xs text-gray-300 font-medium">Iniciando cámara trasera...</p>
         </div>
 
-        <!-- LÍNEAS GUÍA FORMATO OFICIO (Proporción exacta 216x330 mm) -->
-        <div class="relative w-full h-full flex items-center justify-center p-4 pt-16 pb-28 pointer-events-none z-10">
-            <div x-ref="guideBox"
-                 class="w-full max-w-[360px] aspect-[216/330] max-h-[74vh] border-2 border-dashed border-white/70 rounded-3xl flex flex-col justify-between p-5 shadow-2xl relative backdrop-contrast-105">
-                
-                <!-- Esquinas Superiores Naranjas -->
-                <div class="flex justify-between">
-                    <span class="w-7 h-7 border-t-4 border-l-4 border-orange-500 rounded-tl-xl shadow-sm"></span>
-                    <span class="w-7 h-7 border-t-4 border-r-4 border-orange-500 rounded-tr-xl shadow-sm"></span>
-                </div>
+        <!-- LÍNEAS GUÍA MINIMALISTAS A ANCHO COMPLETO (Carta y Oficio) -->
+        <div class="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+            <!-- 1. Línea Superior: INICIO -->
+            <div class="absolute inset-x-0 flex items-center transition-all duration-300" 
+                 :style="'top: ' + topY + 'px;'">
+                <div class="w-full border-t border-dashed border-orange-500/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"></div>
+                <span class="absolute right-3 -top-2.5 px-2 py-0.5 rounded bg-black/75 backdrop-blur-md border border-orange-500/40 text-[9px] font-extrabold text-orange-400 tracking-wider uppercase shadow-lg flex items-center space-x-0.5">
+                    <span>INICIO</span>
+                    <i data-lucide="chevron-down" class="w-2.5 h-2.5 inline"></i>
+                </span>
+            </div>
 
-                <!-- Insignia Central Formato Oficio -->
-                <div class="text-center">
-                    <span class="bg-black/60 backdrop-blur-md text-orange-400 border border-orange-500/30 text-[10px] font-bold tracking-widest px-3.5 py-1.5 rounded-full uppercase shadow-lg inline-flex items-center space-x-1">
-                        <i data-lucide="scan" class="w-3 h-3"></i>
-                        <span>Encuadre Formato Oficio</span>
-                    </span>
-                </div>
+            <!-- 2. Línea Intermedia: FORMATO CARTA (Proporción 1 : 1.294) -->
+            <div class="absolute inset-x-0 flex items-center transition-all duration-300" 
+                 :style="'top: ' + cartaY + 'px;'">
+                <div class="w-full border-t border-dashed border-orange-500/70 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"></div>
+                <span class="absolute right-3 -top-2.5 px-2 py-0.5 rounded bg-black/75 backdrop-blur-md border border-orange-500/40 text-[9px] font-extrabold text-orange-400 tracking-wider uppercase shadow-lg">
+                    CARTA
+                </span>
+            </div>
 
-                <!-- Esquinas Inferiores Naranjas -->
-                <div class="flex justify-between">
-                    <span class="w-7 h-7 border-b-4 border-l-4 border-orange-500 rounded-bl-xl shadow-sm"></span>
-                    <span class="w-7 h-7 border-b-4 border-r-4 border-orange-500 rounded-br-xl shadow-sm"></span>
-                </div>
+            <!-- 3. Línea Inferior: FORMATO OFICIO (Proporción 1 : 1.529) -->
+            <div class="absolute inset-x-0 flex items-center transition-all duration-300" 
+                 :style="'top: ' + oficioY + 'px;'">
+                <div class="w-full border-t border-dashed border-orange-500/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"></div>
+                <span class="absolute right-3 -top-2.5 px-2 py-0.5 rounded bg-black/75 backdrop-blur-md border border-orange-500/40 text-[9px] font-extrabold text-orange-400 tracking-wider uppercase shadow-lg">
+                    OFICIO
+                </span>
             </div>
         </div>
 
@@ -139,33 +161,32 @@
         </div>
     </main>
 
-    <!-- BARRA INFERIOR CON CONTROLES Y FEEDBACK -->
-    <footer class="absolute bottom-0 inset-x-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-5 flex flex-col items-center">
+    <!-- BARRA INFERIOR CON CONTROLES (ESTILO CÁMARA NATIVA) -->
+    <footer class="absolute bottom-0 inset-x-0 z-40 bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-3 pb-5 px-4 flex flex-col items-center pointer-events-auto">
         
         <!-- Notificación Flotante de Éxito -->
         <div x-show="successMessage" 
              x-transition
-             class="mb-3 w-full max-w-sm p-3.5 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-emerald-300 text-xs flex items-center space-x-2.5 backdrop-blur-md shadow-xl"
+             class="mb-3 w-full max-w-sm p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-emerald-300 text-xs flex items-center space-x-2.5 backdrop-blur-md shadow-xl"
              style="display: none;">
             <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 text-emerald-400"></i>
-            <span x-text="successMessage" class="leading-tight"></span>
+            <span x-text="successMessage" class="leading-tight font-medium"></span>
         </div>
 
         <!-- Notificación Flotante de Error -->
         <div x-show="errorMessage" 
              x-transition
-             class="mb-3 w-full max-w-sm p-3.5 bg-rose-500/20 border border-rose-500/40 rounded-2xl text-rose-300 text-xs flex items-center space-x-2.5 backdrop-blur-md shadow-xl"
+             class="mb-3 w-full max-w-sm p-3 bg-rose-500/20 border border-rose-500/40 rounded-2xl text-rose-300 text-xs flex items-center space-x-2.5 backdrop-blur-md shadow-xl"
              style="display: none;">
             <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 text-rose-400"></i>
-            <span x-text="errorMessage" class="leading-tight"></span>
+            <span x-text="errorMessage" class="leading-tight font-medium"></span>
         </div>
 
         <!-- Grupo de Botones -->
         <div class="w-full max-w-sm flex items-center space-x-3">
-            
             <!-- Botón Alternativo: Subir imagen desde galería/archivo -->
-            <label class="p-4 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white rounded-2xl cursor-pointer transition flex items-center justify-center shrink-0 shadow-lg"
-                   title="Subir imagen desde archivo">
+            <label class="w-12 h-12 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white rounded-2xl cursor-pointer transition flex items-center justify-center shrink-0 shadow-lg backdrop-blur-md"
+                   title="Subir imagen desde galería">
                 <input type="file" 
                        accept="image/*" 
                        class="hidden" 
@@ -173,15 +194,15 @@
                 <i data-lucide="image-plus" class="w-5 h-5 text-orange-400"></i>
             </label>
 
-            <!-- Botón Principal de Captura Estilo App Nativa -->
+            <!-- Botón Principal de Captura Estilizado Ergonómico -->
             <button @click="captureAndSend()" 
                     :disabled="!isCameraReady || isProcessing"
                     type="button"
-                    class="flex-1 py-4 px-6 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold rounded-2xl shadow-xl shadow-orange-500/30 flex items-center justify-center space-x-3 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                <div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                    <div class="w-3.5 h-3.5 bg-white rounded-full"></div>
+                    class="flex-1 py-3 px-5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-95 text-white font-black rounded-2xl shadow-xl shadow-orange-500/25 flex items-center justify-center space-x-2.5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                <div class="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
+                    <div class="w-2.5 h-2.5 bg-white rounded-full"></div>
                 </div>
-                <span class="tracking-wider text-xs sm:text-sm">CAPTURAR DOCUMENTO</span>
+                <span class="tracking-wider text-xs sm:text-sm uppercase font-extrabold">Capturar Documento</span>
             </button>
         </div>
     </footer>
@@ -190,7 +211,8 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('documentScanner', (config = {}) => ({
-                maxDimension: (config && config.maxDimension) || 1800,
+                targetWidth: (config && config.targetWidth) || 760,
+                maxHeight: (config && config.maxHeight) || 1530,
                 clientQuality: (config && config.clientQuality) || 0.85,
                 stream: null,
                 isCameraReady: false,
@@ -202,9 +224,37 @@
                 hasTorch: false,
                 torchOn: false,
 
+                // Geometría y posicionamiento de guías en pantalla
+                topY: 56,
+                screenWidth: window.innerWidth,
+                screenHeight: window.innerHeight,
+
+                get guideWidth() {
+                    return Math.min(this.screenWidth, 440);
+                },
+                get guideLeft() {
+                    return Math.round((this.screenWidth - this.guideWidth) / 2);
+                },
+                get cartaHeight() {
+                    return Math.round(this.guideWidth * 1.294);
+                },
+                get oficioHeight() {
+                    return Math.round(this.guideWidth * 1.529);
+                },
+                get cartaY() {
+                    return this.topY + this.cartaHeight;
+                },
+                get oficioY() {
+                    return this.topY + this.oficioHeight;
+                },
+
                 init() {
                     this.startCamera();
                     this.refreshIcons();
+                    window.addEventListener('resize', () => {
+                        this.screenWidth = window.innerWidth;
+                        this.screenHeight = window.innerHeight;
+                    });
                 },
 
                 refreshIcons() {
@@ -278,7 +328,6 @@
                     if (!this.isCameraReady || this.isProcessing) return;
 
                     const video = this.$refs.video;
-                    const guideBox = this.$refs.guideBox;
 
                     const videoWidth = video.videoWidth;
                     const videoHeight = video.videoHeight;
@@ -293,31 +342,29 @@
                     this.errorMessage = '';
                     this.successMessage = '';
 
-                    // Obtener geometría de pantalla
+                    // Obtener geometría de pantalla y video
                     const videoRect = video.getBoundingClientRect();
-                    const guideRect = guideBox.getBoundingClientRect();
-
-                    const clientWidth = videoRect.width;
-                    const clientHeight = videoRect.height;
 
                     // Calcular escala de 'object-cover' (escala uniforme para llenar el contenedor)
-                    const scale = Math.max(clientWidth / videoWidth, clientHeight / videoHeight);
+                    const scale = Math.max(videoRect.width / videoWidth, videoRect.height / videoHeight);
                     const renderedWidth = videoWidth * scale;
                     const renderedHeight = videoHeight * scale;
 
                     // Desplazamiento por centrado (object-position: center center por defecto)
-                    const offsetX = (clientWidth - renderedWidth) / 2;
-                    const offsetY = (clientHeight - renderedHeight) / 2;
+                    const offsetX = (videoRect.width - renderedWidth) / 2;
+                    const offsetY = (videoRect.height - renderedHeight) / 2;
 
-                    // Posición del marco guía respecto a los píxeles renderizados
-                    const boxX = guideRect.left - videoRect.left;
-                    const boxY = guideRect.top - videoRect.top;
+                    // Límites exactos del encuadre natural: ancho de pantalla y desde topY hasta oficioY
+                    const cropBoxX = this.guideLeft;
+                    const cropBoxY = this.topY;
+                    const cropBoxW = this.guideWidth;
+                    const cropBoxH = this.oficioHeight;
 
                     // Mapeo a las coordenadas nativas del sensor
-                    let cropX = (boxX - offsetX) / scale;
-                    let cropY = (boxY - offsetY) / scale;
-                    let cropWidth = guideRect.width / scale;
-                    let cropHeight = guideRect.height / scale;
+                    let cropX = (cropBoxX - offsetX) / scale;
+                    let cropY = (cropBoxY - offsetY) / scale;
+                    let cropWidth = cropBoxW / scale;
+                    let cropHeight = cropBoxH / scale;
 
                     // Clamp seguro dentro de los límites del fotograma
                     cropX = Math.max(0, Math.min(cropX, videoWidth - 10));
@@ -325,19 +372,12 @@
                     cropWidth = Math.min(cropWidth, videoWidth - cropX);
                     cropHeight = Math.min(cropHeight, videoHeight - cropY);
 
-                    // Escalado inteligente por TAMAÑO (Doble Compresión - Local)
-                    let targetWidth = Math.round(cropWidth);
-                    let targetHeight = Math.round(cropHeight);
-                    const maxDim = this.maxDimension;
-
-                    if (targetWidth > maxDim || targetHeight > maxDim) {
-                        if (targetWidth >= targetHeight) {
-                            targetHeight = Math.round((targetHeight * maxDim) / targetWidth);
-                            targetWidth = maxDim;
-                        } else {
-                            targetWidth = Math.round((targetWidth * maxDim) / targetHeight);
-                            targetHeight = maxDim;
-                        }
+                    // Escalado óptimo por targetWidth y maxHeight (.env)
+                    const targetWidth = this.targetWidth || 760;
+                    const maxHeight = this.maxHeight || 1530;
+                    let targetHeight = Math.round((cropHeight * targetWidth) / cropWidth);
+                    if (targetHeight > maxHeight) {
+                        targetHeight = maxHeight;
                     }
 
                     // Renderizar en canvas optimizado
@@ -378,8 +418,8 @@
                     this.successMessage = '';
 
                     try {
-                        // Pre-escalado local en el navegador antes de subir fotos pesadas de galería
-                        const optimizedBlob = await this.downscaleImageFile(file, this.maxDimension, this.clientQuality);
+                        // Pre-escalado local en el navegador antes de subir fotos de galería
+                        const optimizedBlob = await this.downscaleImageFile(file, this.targetWidth, this.clientQuality);
                         this.loadingText = 'Analizando documento...';
 
                         const formData = new FormData();
@@ -397,28 +437,25 @@
                     }
                 },
 
-                downscaleImageFile(file, maxDim, quality) {
+                downscaleImageFile(file, targetW, quality) {
                     return new Promise((resolve) => {
                         const img = new Image();
                         img.onload = () => {
                             let w = img.width;
                             let h = img.height;
-
-                            if (w > maxDim || h > maxDim) {
-                                if (w >= h) {
-                                    h = Math.round((h * maxDim) / w);
-                                    w = maxDim;
-                                } else {
-                                    w = Math.round((w * maxDim) / h);
-                                    h = maxDim;
-                                }
+                            let newW = targetW || 760;
+                            let newH = Math.round((h * newW) / w);
+                            const maxH = this.maxHeight || 1530;
+                            if (newH > maxH) {
+                                newH = maxH;
+                                newW = Math.round((w * maxH) / h);
                             }
 
                             const canvas = document.createElement('canvas');
-                            canvas.width = w;
-                            canvas.height = h;
+                            canvas.width = newW;
+                            canvas.height = newH;
                             const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, w, h);
+                            ctx.drawImage(img, 0, 0, newW, newH);
 
                             canvas.toBlob((blob) => {
                                 resolve(blob || file);
