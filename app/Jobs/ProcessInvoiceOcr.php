@@ -93,36 +93,41 @@ class ProcessInvoiceOcr implements ShouldQueue
 
     private function optimizeInvoiceImage(string $rawContent): string
     {
-        $maxDimension = (int) config('invoices.max_dimension', 1800);
-        $quality = (int) config('invoices.quality', 75);
+        $maxDimension = (int) config('invoices.max_dimension', 1530);
+        $sizeInfo = @getimagesizefromstring($rawContent);
+
+        if ($sizeInfo === false) {
+            return $rawContent;
+        }
+
+        [$width, $height] = $sizeInfo;
+
+        if ($width <= $maxDimension && $height <= $maxDimension) {
+            return $rawContent;
+        }
 
         $srcImage = @imagecreatefromstring($rawContent);
         if ($srcImage === false) {
             return $rawContent;
         }
 
-        $width = imagesx($srcImage);
-        $height = imagesy($srcImage);
-
-        if ($width > $maxDimension || $height > $maxDimension) {
-            if ($width >= $height) {
-                $newWidth = $maxDimension;
-                $newHeight = (int) round(($height * $maxDimension) / $width);
-            } else {
-                $newHeight = $maxDimension;
-                $newWidth = (int) round(($width * $maxDimension) / $height);
-            }
-
-            $dstImage = imagecreatetruecolor($newWidth, $newHeight);
-            imagecopyresampled($dstImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-            imagedestroy($srcImage);
-            $srcImage = $dstImage;
+        if ($width >= $height) {
+            $newWidth = $maxDimension;
+            $newHeight = (int) round(($height * $maxDimension) / $width);
+        } else {
+            $newHeight = $maxDimension;
+            $newWidth = (int) round(($width * $maxDimension) / $height);
         }
 
-        ob_start();
-        imagejpeg($srcImage, null, $quality);
-        $optimized = ob_get_clean();
+        $dstImage = imagecreatetruecolor($newWidth, $newHeight);
+        imagecopyresampled($dstImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
         imagedestroy($srcImage);
+
+        $quality = (int) config('invoices.quality', 80);
+        ob_start();
+        imagejpeg($dstImage, null, $quality);
+        $optimized = ob_get_clean();
+        imagedestroy($dstImage);
 
         return $optimized ?: $rawContent;
     }
