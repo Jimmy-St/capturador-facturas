@@ -24,6 +24,7 @@
             user-select: none;
         }
     </style>
+</head>
 <body class="bg-slate-950 text-white h-screen overflow-hidden flex flex-col" 
       x-data="documentScanner({
           targetWidth: {{ config('invoices.target_width', 760) }},
@@ -104,6 +105,12 @@
                class="absolute inset-0 w-full h-full object-cover">
         </video>
 
+        <!-- Flash de Obturador -->
+        <div x-show="showFlash" 
+             x-transition:leave.duration.150ms
+             class="absolute inset-0 bg-white z-50 pointer-events-none" 
+             style="display: none;"></div>
+
         <!-- Spinner mientras la cámara inicializa -->
         <div x-show="!isCameraReady && !cameraError" 
              class="absolute inset-0 z-20 flex flex-col items-center justify-center space-y-3 bg-black/80 backdrop-blur-xs">
@@ -142,21 +149,49 @@
             </div>
         </div>
 
-        <!-- OVERLAY DE CARGA / LOADING AMIGABLE -->
+        <!-- OVERLAY DE CARGA CON LOGO TALOS Y CÍRCULO ORBITAL -->
         <div x-show="isProcessing" 
-             x-transition.opacity
-             class="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center space-y-6 p-6 text-center"
+             x-transition.opacity.duration.250ms
+             class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center select-none"
              style="display: none;">
             
-            <div class="relative w-20 h-20 flex items-center justify-center">
-                <div class="absolute inset-0 border-4 border-orange-500/20 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                <i data-lucide="sparkles" class="w-8 h-8 text-orange-400 animate-pulse"></i>
+            <!-- Elemento Flotante: Logo TALOS con Círculo Giratorio Alrededor -->
+            <div class="relative w-20 h-20 flex items-center justify-center mb-5">
+                <!-- Círculo Orbital Giratorio -->
+                <div class="absolute inset-0 rounded-full border-2 border-orange-500/20 border-t-orange-500 animate-spin"></div>
+                
+                <!-- Escudo TALOS Central -->
+                <svg class="w-10 h-10 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 8px rgba(249, 115, 22, 0.45));">
+                    <defs>
+                        <linearGradient id="talos-loader-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#f97316" />
+                            <stop offset="100%" stop-color="#f59e0b" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" 
+                          stroke="url(#talos-loader-grad)" 
+                          stroke-width="1.6" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round" />
+                    <path d="m9 12 2 2 4-4" 
+                          fill="none" 
+                          stroke="url(#talos-loader-grad)" 
+                          stroke-width="1.8" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round" />
+                </svg>
             </div>
             
-            <div class="space-y-2 max-w-xs">
-                <h3 class="text-white font-bold text-lg" x-text="loadingText">Procesando documento...</h3>
-                <p class="text-xs text-gray-400">OCR está extrayendo los datos tributarios con alta precisión</p>
+            <!-- Texto de Pasos Dinámico -->
+            <div class="space-y-1 max-w-xs">
+                <h3 class="text-white font-bold text-sm tracking-wide" x-text="loadingText">Optimizando encuadre...</h3>
+                <p class="text-[11px] text-gray-400" x-text="loadingSubtext">Extrayendo datos con IA Gemini...</p>
+            </div>
+
+            <!-- Barra de Progreso Secuencial -->
+            <div class="w-52 h-1.5 bg-white/10 rounded-full overflow-hidden mt-4 relative">
+                <div class="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-300 ease-out rounded-full" 
+                     :style="'width: ' + progressPercent + '%;'"></div>
             </div>
         </div>
     </main>
@@ -164,25 +199,53 @@
     <!-- BARRA INFERIOR CON CONTROLES (ESTILO CÁMARA NATIVA) -->
     <footer class="absolute bottom-0 inset-x-0 z-40 bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-3 pb-5 px-4 flex flex-col items-center pointer-events-auto">
         
-        <!-- Notificación Flotante de Éxito -->
-        <div x-show="successMessage" 
-             x-transition
-             class="mb-3 w-full max-w-sm p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl text-emerald-300 text-xs flex items-center space-x-2.5 backdrop-blur-md shadow-xl"
+        <!-- MINI CAJITA FLOTANTE DE ÉXITO (OPCIÓN A INTERMEDIA: 2.5s y fade out suave) -->
+        <div x-show="showSuccessToast" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-500"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+             class="mb-3 w-full max-w-sm bg-slate-900/95 border border-emerald-500/50 rounded-2xl p-3.5 backdrop-blur-md shadow-2xl shadow-emerald-950/60 flex flex-col space-y-1 pointer-events-auto"
              style="display: none;">
-            <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 text-emerald-400"></i>
-            <span x-text="successMessage" class="leading-tight font-medium"></span>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-1.5 text-emerald-400">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
+                    <span class="text-xs font-black uppercase tracking-wider">Captura Correcta</span>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      x-show="recentDoc.fidelity"
+                      x-text="'Fidelidad ' + recentDoc.fidelity"></span>
+            </div>
+            <div class="text-xs font-bold text-white truncate" x-text="recentDoc.supplier || 'PROVEEDOR IDENTIFICADO'"></div>
+            <div class="flex items-center justify-between text-[11px] text-gray-300">
+                <span class="text-gray-400 truncate max-w-[190px]" x-text="(recentDoc.document_type || 'Doc') + ' #' + (recentDoc.folio || 'S/N')"></span>
+                <span class="font-extrabold text-emerald-400 ml-2 shrink-0" x-text="formatCurrency(recentDoc.amount)"></span>
+            </div>
         </div>
 
-        <!-- Notificación Flotante de Error -->
-        <div x-show="errorMessage" 
-             x-transition
-             class="mb-3 w-full max-w-sm p-3 bg-rose-500/20 border border-rose-500/40 rounded-2xl text-rose-300 text-xs flex items-center space-x-2.5 backdrop-blur-md shadow-xl"
+        <!-- MINI CAJITA FLOTANTE DE ERROR / ADVERTENCIA -->
+        <div x-show="showErrorToast" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-400"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+             class="mb-3 w-full max-w-sm bg-slate-900/95 border border-rose-500/50 rounded-2xl p-3.5 backdrop-blur-md shadow-2xl shadow-rose-950/60 flex items-start space-x-3 pointer-events-auto"
              style="display: none;">
-            <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 text-rose-400"></i>
-            <span x-text="errorMessage" class="leading-tight font-medium"></span>
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 shrink-0 mt-0.5"></i>
+            <div class="flex-1 min-w-0">
+                <span class="text-xs font-black text-rose-400 uppercase tracking-wider block">No se guardó el documento</span>
+                <p class="text-[11px] text-gray-200 mt-0.5 leading-snug" x-text="errorMessage"></p>
+            </div>
+            <button @click="showErrorToast = false" type="button" class="text-gray-400 hover:text-white p-1">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
         </div>
 
-        <!-- Grupo de Botones -->
+        <!-- Grupo de Botones de Disparo -->
         <div class="w-full max-w-sm flex items-center space-x-3">
             <!-- Botón Alternativo: Subir imagen desde galería/archivo -->
             <label class="w-12 h-12 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white rounded-2xl cursor-pointer transition flex items-center justify-center shrink-0 shadow-lg backdrop-blur-md"
@@ -207,7 +270,7 @@
         </div>
     </footer>
 
-    <!-- CÁMARA, CANVAS Y AJAX -->
+    <!-- CÁMARA, CANVAS, SENSORIAL Y AJAX -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('documentScanner', (config = {}) => ({
@@ -218,9 +281,21 @@
                 isCameraReady: false,
                 cameraError: false,
                 isProcessing: false,
+                showFlash: false,
+                progressPercent: 0,
                 loadingText: 'Capturando imagen...',
+                loadingSubtext: '',
                 errorMessage: '',
-                successMessage: '',
+                showSuccessToast: false,
+                showErrorToast: false,
+                recentDoc: {
+                    supplier: '',
+                    folio: '',
+                    document_type: '',
+                    amount: 0,
+                    fidelity: ''
+                },
+                toastTimeout: null,
                 hasTorch: false,
                 torchOn: false,
 
@@ -265,6 +340,93 @@
                     });
                 },
 
+                playSuccessSound() {
+                    try {
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const now = audioCtx.currentTime;
+                        
+                        const osc1 = audioCtx.createOscillator();
+                        const gain1 = audioCtx.createGain();
+                        osc1.type = 'sine';
+                        osc1.frequency.setValueAtTime(523.25, now);
+                        gain1.gain.setValueAtTime(0.12, now);
+                        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                        osc1.connect(gain1);
+                        gain1.connect(audioCtx.destination);
+                        osc1.start(now);
+                        osc1.stop(now + 0.15);
+
+                        const osc2 = audioCtx.createOscillator();
+                        const gain2 = audioCtx.createGain();
+                        osc2.type = 'sine';
+                        osc2.frequency.setValueAtTime(659.25, now + 0.08);
+                        gain2.gain.setValueAtTime(0.15, now + 0.08);
+                        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+                        osc2.connect(gain2);
+                        gain2.connect(audioCtx.destination);
+                        osc2.start(now + 0.08);
+                        osc2.stop(now + 0.28);
+                    } catch (e) {}
+                },
+
+                playErrorSound() {
+                    try {
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const now = audioCtx.currentTime;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(220, now);
+                        gain.gain.setValueAtTime(0.15, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.35);
+                    } catch (e) {}
+                },
+
+                triggerHaptic(type = 'success') {
+                    if (navigator.vibrate) {
+                        if (type === 'success') {
+                            navigator.vibrate([25, 40, 25]);
+                        } else if (type === 'error') {
+                            navigator.vibrate([100, 60, 100]);
+                        } else {
+                            navigator.vibrate(30);
+                        }
+                    }
+                },
+
+                savePhotoLocally(blob) {
+                    try {
+                        const now = new Date();
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+                        const fileName = `talos_scan_${dateStr}.jpg`;
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(() => {
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(link.href);
+                        }, 1500);
+                    } catch (e) {
+                        console.warn('Auto-save local no disponible:', e);
+                    }
+                },
+
+                formatCurrency(value) {
+                    if (!value && value !== 0) return '$ 0';
+                    return new Intl.NumberFormat('es-CL', {
+                        style: 'currency',
+                        currency: 'CLP',
+                        maximumFractionDigits: 0
+                    }).format(value);
+                },
+
                 async startCamera() {
                     this.cameraError = false;
                     this.isCameraReady = false;
@@ -303,6 +465,7 @@
                         this.cameraError = true;
                         this.isCameraReady = false;
                         this.errorMessage = 'No se pudo acceder a la cámara. Puedes subir una foto usando el botón de galería.';
+                        this.showErrorToast = true;
                         console.error('Error al inicializar cámara:', err);
                         this.refreshIcons();
                     }
@@ -328,29 +491,37 @@
                     if (!this.isCameraReady || this.isProcessing) return;
 
                     const video = this.$refs.video;
-
                     const videoWidth = video.videoWidth;
                     const videoHeight = video.videoHeight;
 
                     if (!videoWidth || !videoHeight) {
                         this.errorMessage = 'La cámara aún no transmite fotogramas válidos.';
+                        this.showErrorToast = true;
                         return;
                     }
 
+                    // 1. Efecto Flash de Obturador y Háptica
+                    this.showFlash = true;
+                    this.triggerHaptic('click');
+                    setTimeout(() => {
+                        this.showFlash = false;
+                    }, 120);
+
+                    // 2. Iniciar Proceso y Loader
                     this.isProcessing = true;
+                    this.progressPercent = 15;
                     this.loadingText = 'Optimizando encuadre...';
+                    this.loadingSubtext = 'Ajustando imagen a 760px HD...';
                     this.errorMessage = '';
-                    this.successMessage = '';
+                    this.showSuccessToast = false;
+                    this.showErrorToast = false;
 
-                    // Obtener geometría de pantalla y video
+                    // Geometría de pantalla y video
                     const videoRect = video.getBoundingClientRect();
-
-                    // Calcular escala de 'object-cover' (escala uniforme para llenar el contenedor)
                     const scale = Math.max(videoRect.width / videoWidth, videoRect.height / videoHeight);
                     const renderedWidth = videoWidth * scale;
                     const renderedHeight = videoHeight * scale;
 
-                    // Desplazamiento por centrado (object-position: center center por defecto)
                     const offsetX = (videoRect.width - renderedWidth) / 2;
                     const offsetY = (videoRect.height - renderedHeight) / 2;
 
@@ -360,19 +531,16 @@
                     const cropBoxW = this.guideWidth;
                     const cropBoxH = this.oficioHeight;
 
-                    // Mapeo a las coordenadas nativas del sensor
                     let cropX = (cropBoxX - offsetX) / scale;
                     let cropY = (cropBoxY - offsetY) / scale;
                     let cropWidth = cropBoxW / scale;
                     let cropHeight = cropBoxH / scale;
 
-                    // Clamp seguro dentro de los límites del fotograma
                     cropX = Math.max(0, Math.min(cropX, videoWidth - 10));
                     cropY = Math.max(0, Math.min(cropY, videoHeight - 10));
                     cropWidth = Math.min(cropWidth, videoWidth - cropX);
                     cropHeight = Math.min(cropHeight, videoHeight - cropY);
 
-                    // Escalado óptimo por targetWidth y maxHeight (.env)
                     const targetWidth = this.targetWidth || 760;
                     const maxHeight = this.maxHeight || 1530;
                     let targetHeight = Math.round((cropHeight * targetWidth) / cropWidth);
@@ -380,7 +548,6 @@
                         targetHeight = maxHeight;
                     }
 
-                    // Renderizar en canvas optimizado
                     const croppedCanvas = document.createElement('canvas');
                     croppedCanvas.width = targetWidth;
                     croppedCanvas.height = targetHeight;
@@ -392,14 +559,25 @@
                         0, 0, targetWidth, targetHeight
                     );
 
-                    this.loadingText = 'Analizando documento...';
+                    this.progressPercent = 35;
+                    this.loadingText = 'Guardando copia local...';
+                    this.loadingSubtext = 'Almacenando en el dispositivo...';
 
                     croppedCanvas.toBlob(async (blob) => {
                         if (!blob) {
                             this.isProcessing = false;
                             this.errorMessage = 'Error al generar la imagen del encuadre.';
+                            this.showErrorToast = true;
+                            this.refreshIcons();
                             return;
                         }
+
+                        // Guardado automático en el almacenamiento del teléfono
+                        this.savePhotoLocally(blob);
+
+                        this.progressPercent = 60;
+                        this.loadingText = 'Analizando con IA...';
+                        this.loadingSubtext = 'Gemini Flash Lite extrayendo datos...';
 
                         const formData = new FormData();
                         formData.append('image', blob, 'invoice_scan.jpg');
@@ -413,14 +591,19 @@
                     if (!file) return;
 
                     this.isProcessing = true;
-                    this.loadingText = 'Optimizando foto de galería...';
+                    this.progressPercent = 25;
+                    this.loadingText = 'Optimizando foto...';
+                    this.loadingSubtext = 'Redimensionando para alta velocidad...';
                     this.errorMessage = '';
-                    this.successMessage = '';
+                    this.showSuccessToast = false;
+                    this.showErrorToast = false;
 
                     try {
-                        // Pre-escalado local en el navegador antes de subir fotos de galería
                         const optimizedBlob = await this.downscaleImageFile(file, this.targetWidth, this.clientQuality);
-                        this.loadingText = 'Analizando documento...';
+                        
+                        this.progressPercent = 60;
+                        this.loadingText = 'Analizando con IA...';
+                        this.loadingSubtext = 'Gemini Flash Lite extrayendo datos...';
 
                         const formData = new FormData();
                         formData.append('image', optimizedBlob, 'gallery_invoice.jpg');
@@ -428,7 +611,6 @@
                         await this.sendFormData(formData);
                     } catch (e) {
                         console.error('Error pre-escalando imagen de galería:', e);
-                        // Fallback al archivo original
                         const formData = new FormData();
                         formData.append('image', file);
                         await this.sendFormData(formData);
@@ -468,6 +650,10 @@
 
                 async sendFormData(formData) {
                     try {
+                        this.progressPercent = 80;
+                        this.loadingText = 'Procesando tributario...';
+                        this.loadingSubtext = 'Interpretando RUT, Folio y Montos...';
+
                         const response = await fetch("{{ route('invoices.process') }}", {
                             method: 'POST',
                             headers: {
@@ -480,26 +666,67 @@
                         const result = await response.json();
 
                         if (response.ok && result.success) {
-                            this.loadingText = '¡Documento recibido!';
-                            this.successMessage = '¡Documento enviado a procesamiento! Cámara lista para el siguiente documento.';
+                            this.progressPercent = 100;
+                            this.loadingText = '¡Documento registrado!';
+                            this.loadingSubtext = 'Guardado en la base de datos';
+
+                            // Feedback sensorial
+                            this.playSuccessSound();
+                            this.triggerHaptic('success');
+
+                            // Configurar datos de la mini cajita
+                            this.recentDoc = {
+                                supplier: result.invoice?.supplier || result.ocr_data?.nombre_proveedor || 'PROVEEDOR IDENTIFICADO',
+                                folio: result.invoice?.folio || result.ocr_data?.numero_documento || 'S/N',
+                                document_type: result.invoice?.document_type || result.ocr_data?.tipo_documento || 'Factura',
+                                amount: result.invoice?.amount || result.ocr_data?.total || 0,
+                                fidelity: result.invoice?.fidelity || ''
+                            };
+
                             setTimeout(() => {
                                 this.isProcessing = false;
+                                this.showSuccessToast = true;
                                 this.refreshIcons();
-                                setTimeout(() => {
-                                    this.successMessage = '';
-                                }, 3500);
-                            }, 800);
+
+                                if (this.toastTimeout) clearTimeout(this.toastTimeout);
+                                // Permanece 2.5 segundos y se desvanece suavemente
+                                this.toastTimeout = setTimeout(() => {
+                                    this.showSuccessToast = false;
+                                }, 2500);
+                            }, 350);
+
                         } else {
                             this.isProcessing = false;
-                            this.errorMessage = result.error || 'Ocurrió un error al procesar el documento con OCR.';
+                            this.playErrorSound();
+                            this.triggerHaptic('error');
+
+                            let errorDetail = result.error || 'Ocurrió un error al procesar el documento con OCR.';
+                            if (errorDetail === 'imagen borrosa') {
+                                errorDetail = 'La imagen está borrosa o desenfocada. Por favor, mantén la cámara firme y vuelve a capturar.';
+                            } else if (errorDetail === 'imagen oscura') {
+                                errorDetail = 'La imagen está muy oscura. Enciende la linterna o busca mejor iluminación.';
+                            } else if (errorDetail === 'imagen incorrecta') {
+                                errorDetail = 'La imagen no corresponde a una factura o documento tributario válido.';
+                            }
+
+                            this.errorMessage = errorDetail;
+                            this.showErrorToast = true;
                             this.refreshIcons();
+
+                            if (this.toastTimeout) clearTimeout(this.toastTimeout);
+                            this.toastTimeout = setTimeout(() => {
+                                this.showErrorToast = false;
+                            }, 5000);
                         }
 
                     } catch (err) {
                         this.isProcessing = false;
+                        this.playErrorSound();
+                        this.triggerHaptic('error');
                         this.errorMessage = 'Error de conexión con el servidor. Por favor, reintenta.';
-                        console.error('Error al procesar factura:', err);
+                        this.showErrorToast = true;
                         this.refreshIcons();
+                        console.error('Error al procesar factura:', err);
                     }
                 }
             }));

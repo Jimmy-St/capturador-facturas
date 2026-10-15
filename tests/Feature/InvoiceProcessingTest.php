@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Services\GeminiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -17,13 +16,28 @@ class InvoiceProcessingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_process_invoice_dispatches_background_job_successfully(): void
+    public function test_process_invoice_executes_sync_ocr_and_persists_invoice(): void
     {
-        Storage::fake('local');
-        Queue::fake();
+        Storage::fake('public');
 
         $user = User::factory()->create();
         $file = UploadedFile::fake()->image('factura.jpg', 800, 1000);
+
+        $this->mock(GeminiService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('analyzeInvoiceFromContent')
+                ->once()
+                ->andReturn([
+                    'tipo_documento' => 'FACTURA ELECTRÓNICA',
+                    'numero_documento' => '123456',
+                    'rut_proveedor' => '76.123.456-7',
+                    'nombre_proveedor' => 'EMPRESA PRUEBA SPA',
+                    'fecha_emision' => '2026-09-24',
+                    'total' => '12345.67',
+                    'fidelidad_estimada' => 95,
+                    'error' => '',
+                    'tokens_cost' => 450,
+                ]);
+        });
 
         $response = $this->actingAs($user)->postJson(route('invoices.process'), [
             'image' => $file,
@@ -32,9 +46,46 @@ class InvoiceProcessingTest extends TestCase
         $response->assertOk()
             ->assertJson([
                 'success' => true,
+                'invoice' => [
+                    'folio' => '123456',
+                    'supplier' => 'EMPRESA PRUEBA SPA',
+                ],
             ]);
 
-        Queue::assertPushed(ProcessInvoiceOcr::class);
+        $this->assertDatabaseHas('invoices', [
+            'folio' => '123456',
+            'supplier' => 'EMPRESA PRUEBA SPA',
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_process_invoice_rejects_blurry_or_invalid_document(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $file = UploadedFile::fake()->image('borrosa.jpg', 800, 1000);
+
+        $this->mock(GeminiService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('analyzeInvoiceFromContent')
+                ->once()
+                ->andReturn([
+                    'error' => 'imagen borrosa',
+                    'fidelidad_estimada' => 0,
+                ]);
+        });
+
+        $response = $this->actingAs($user)->postJson(route('invoices.process'), [
+            'image' => $file,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'error' => 'imagen borrosa',
+            ]);
+
+        $this->assertDatabaseCount('invoices', 0);
     }
 
     public function test_process_invoice_ocr_job_saves_data_and_tokens(): void

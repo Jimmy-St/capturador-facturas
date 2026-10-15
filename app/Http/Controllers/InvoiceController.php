@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ProcessInvoiceOcr;
 use App\Models\Invoice;
 use App\Services\GeminiService;
 use Carbon\Carbon;
@@ -103,7 +102,10 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Recept invoice capture from mobile scanner, store temp file and dispatch background OCR job.
+     * Processes an uploaded invoice capture via synchronous OCR and persists the record.
+     *
+     * @param  Request  $request  The incoming HTTP request containing the captured image.
+     * @return JsonResponse JSON payload with status, saved invoice summary, or validation error.
      */
     public function processInvoice(Request $request): JsonResponse
     {
@@ -116,24 +118,59 @@ class InvoiceController extends Controller
 
         try {
             $file = $request->file('image');
-            $tempFileName = 'temp_invoices/'.(string) Str::uuid().'.jpg';
+            $mimeType = $file->getMimeType() ?: 'image/jpeg';
+            $rawContent = $file->get();
+            $optimizedImageContent = $this->optimizeInvoiceImage($rawContent);
 
-            // Guardar imagen recibida de inmediato en almacenamiento local temporal
-            Storage::disk('local')->put($tempFileName, $file->get());
+            $ocrResponse = $this->geminiService->analyzeInvoiceFromContent($optimizedImageContent, $mimeType);
 
-            // Despachar el Job a la cola en segundo plano (asíncrono)
-            ProcessInvoiceOcr::dispatch($tempFileName, 'image/jpeg', (int) auth()->id());
+            if (! empty($ocrResponse['error'])) {
+                return response()->json([
+                    'success' => false,
+                    'error' => $ocrResponse['error'],
+                    'ocr_data' => $ocrResponse,
+                ], 422);
+            }
+
+            $uuidName = (string) Str::uuid().'.jpg';
+            $imagePath = 'invoices/'.$uuidName;
+            Storage::disk('public')->put($imagePath, $optimizedImageContent);
+
+            $invoice = Invoice::create([
+                'document_type' => ! empty($ocrResponse['tipo_documento']) ? (string) $ocrResponse['tipo_documento'] : 'FACTURA ELECTRÓNICA',
+                'folio' => ! empty($ocrResponse['numero_documento']) ? (string) $ocrResponse['numero_documento'] : 'S/N',
+                'rut' => ! empty($ocrResponse['rut_proveedor']) ? (string) $ocrResponse['rut_proveedor'] : 'N/A',
+                'supplier' => ! empty($ocrResponse['nombre_proveedor']) ? (string) $ocrResponse['nombre_proveedor'] : 'PROVEEDOR NO IDENTIFICADO',
+                'document_date' => $this->parseDocumentDate($ocrResponse['fecha_emision'] ?? null),
+                'reception_date' => now(),
+                'amount' => $this->parseAmount($ocrResponse['total'] ?? 0),
+                'fidelity' => $this->mapFidelity((int) ($ocrResponse['fidelidad_estimada'] ?? 0)),
+                'tokens_cost' => (int) ($ocrResponse['tokens_cost'] ?? (($ocrResponse['tokens_in'] ?? 0) + ($ocrResponse['tokens_out'] ?? 0))),
+                'payment_status' => 'adeudado',
+                'image_path' => $imagePath,
+                'raw_response_json' => json_encode($ocrResponse, JSON_UNESCAPED_UNICODE),
+                'user_id' => (int) auth()->id(),
+            ]);
 
             return response()->json([
                 'success' => true,
-                'is_operator' => auth()->user()?->isOperator() ?? false,
-                'message' => 'Documento recibido e ingresado a la cola de procesamiento.',
+                'message' => 'Documento procesado y registrado exitosamente.',
+                'invoice' => [
+                    'id' => $invoice->id,
+                    'document_type' => $invoice->document_type,
+                    'folio' => $invoice->folio,
+                    'supplier' => $invoice->supplier,
+                    'rut' => $invoice->rut,
+                    'amount' => $invoice->amount,
+                    'fidelity' => $invoice->fidelity,
+                ],
+                'ocr_data' => $ocrResponse,
             ]);
 
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'Error al recibir el documento: '.$e->getMessage(),
+                'error' => 'Error al procesar el documento: '.$e->getMessage(),
             ], 500);
         }
     }
