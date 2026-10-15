@@ -29,7 +29,9 @@
       x-data="documentScanner({
           targetWidth: {{ config('invoices.target_width', 760) }},
           maxHeight: {{ config('invoices.max_height', 1530) }},
-          clientQuality: {{ config('invoices.client_quality', 0.85) }}
+          clientQuality: {{ config('invoices.client_quality', 0.85) }},
+          successToastDuration: {{ config('invoices.success_toast_duration_ms', 2500) }},
+          errorToastDuration: {{ config('invoices.error_toast_duration_ms', 5000) }}
       })">
 
     <!-- HEADER FLOTANTE TIPO APP -->
@@ -277,6 +279,8 @@
                 targetWidth: (config && config.targetWidth) || 760,
                 maxHeight: (config && config.maxHeight) || 1530,
                 clientQuality: (config && config.clientQuality) || 0.85,
+                successToastDuration: (config && config.successToastDuration) || 2500,
+                errorToastDuration: (config && config.errorToastDuration) || 5000,
                 stream: null,
                 isCameraReady: false,
                 cameraError: false,
@@ -689,10 +693,9 @@
                                 this.refreshIcons();
 
                                 if (this.toastTimeout) clearTimeout(this.toastTimeout);
-                                // Permanece 2.5 segundos y se desvanece suavemente
                                 this.toastTimeout = setTimeout(() => {
                                     this.showSuccessToast = false;
-                                }, 2500);
+                                }, this.successToastDuration);
                             }, 350);
 
                         } else {
@@ -716,7 +719,7 @@
                             if (this.toastTimeout) clearTimeout(this.toastTimeout);
                             this.toastTimeout = setTimeout(() => {
                                 this.showErrorToast = false;
-                            }, 5000);
+                            }, this.errorToastDuration);
                         }
 
                     } catch (err) {
@@ -726,6 +729,10 @@
                         this.errorMessage = 'Error de conexión con el servidor. Por favor, reintenta.';
                         this.showErrorToast = true;
                         this.refreshIcons();
+                        if (this.toastTimeout) clearTimeout(this.toastTimeout);
+                        this.toastTimeout = setTimeout(() => {
+                            this.showErrorToast = false;
+                        }, this.errorToastDuration);
                         console.error('Error al procesar factura:', err);
                     }
                 }
